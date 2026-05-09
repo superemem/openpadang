@@ -9,9 +9,10 @@
 
 - **Phase:** 0 — Foundation Setup
 - **Last updated:** 2026-05-09
-- **Active branch:** `main` (belum init git)
+- **Active branch:** `main`
 - **Domain status:** Belum register. Top candidate: `openpadang.info` (verified available 2026-05-09)
-- **Github repo:** Belum dibuat. Plan: `github.com/superemem/openpadang` atau buat org `openpadang`
+- **Github repo:** ✅ LIVE → https://github.com/superemem/openpadang (public)
+- **First commit:** `8c28634` chore: initial foundation setup (2026-05-09)
 
 ---
 
@@ -22,10 +23,13 @@
 - ✅ Folder dibuat: `/Users/azwary/openpadang/`
 - ✅ CLAUDE.md project-level dibuat (inherit identity dari Emen Workspace CLAUDE.md)
 - ✅ Memory log dibuat (file ini)
-- ✅ Initial docs disusun: plan, tech-stack, agents-skills, data-catalog
-- 🔲 Git init (belum)
-- 🔲 Domain registrasi (postponed)
-- 🔲 GitHub repo (postponed)
+- ✅ Initial docs disusun: plan, tech-stack, agents-skills, data-catalog, roadmap-detail
+- ✅ Git init + first commit (`8c28634`)
+- ✅ GitHub repo public: https://github.com/superemem/openpadang
+- 🔲 Domain registrasi (postponed — Phase 1 atau setelah dataset pertama)
+- 🔲 SvelteKit + Tailwind + shadcn-svelte + Lucide setup
+- 🔲 Landing page sederhana
+- 🔲 Deploy ke Vercel
 
 ### Decision yang sudah dibuat
 - **Brand:** OpenPadang (locked)
@@ -37,11 +41,11 @@
 - **Package manager:** pnpm (wajib, bukan npm/yarn)
 - **Phase 0 hosting:** Vercel default URL (`openpadang.vercel.app`) — domain custom nyusul
 - **GitHub repo:** `superemem/openpadang` (personal account, public)
+- **Repo structure:** pnpm Monorepo (A1) — `docs/` (Astro Starlight), `app/` (SvelteKit), `packages/shared/` (design tokens, types)
 
 ### Decision yang masih pending
 - 🔲 First dataset to curate — pilih dari shortlist di `docs/04-data-catalog.md` (recommend: OSM POI Padang)
 - 🔲 Custom domain register — kapan? (Phase 1 atau setelah ada dataset pertama)
-- 🔲 Layout final: SvelteKit single-app (semua satu domain) vs split (Astro docs + SvelteKit app di subdomain)
 
 ---
 

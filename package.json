@@ -1,0 +1,27 @@
+{
+  "name": "openpadang",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Civic open data initiative untuk Padang & Sumbar — terbuka, terstandar, gratis.",
+  "license": "MIT",
+  "homepage": "https://github.com/superemem/openpadang",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/superemem/openpadang.git"
+  },
+  "scripts": {
+    "dev:site": "pnpm --filter site dev",
+    "dev:app": "pnpm --filter app dev",
+    "build:site": "pnpm --filter site build",
+    "build:app": "pnpm --filter app build",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "format": "pnpm -r format"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
