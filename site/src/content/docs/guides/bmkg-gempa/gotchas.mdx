@@ -195,6 +195,66 @@ try {
 }
 ```
 
+## ⚠️ Coverage `live30event.xml` Terbatas (~30-35 Jam)
+
+Meskipun feed ini berisi ~200 events, **coverage waktunya terbatas pada
+event terbaru saja**. Live test pada Mei 2026 menunjukkan range:
+
+- Event paling lama dalam feed: sekitar **30-35 jam ke belakang**
+- Event paling baru: real-time (latency 1-2 menit)
+
+Tidak semua event historis tersedia. Untuk **monitoring jangka panjang
+atau historical analysis**, kombinasikan dengan:
+
+| Kebutuhan | Source |
+|---|---|
+| 0-30 jam terakhir | `live30event.xml` |
+| Historical lengkap (>30 jam) | [repogempa.bmkg.go.id/eventcatalog](https://repogempa.bmkg.go.id/eventcatalog) (web UI, butuh submit form) |
+| Alternatif historical | [USGS Earthquake Catalog](https://earthquake.usgs.gov/fdsnws/event/1/) |
+
+```js
+// Defensive: cek apakah event yang dibutuhkan ada di feed
+async function getEventsLast24h() {
+	const events = await fetchLive30Events();
+	const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+	const recent = events.filter((e) => parseWaktu(e.waktu).getTime() >= cutoff);
+	if (recent.length === 0) {
+		console.warn('No events in last 24h — fallback ke repogempa.bmkg.go.id');
+	}
+	return recent;
+}
+```
+
+## ⚠️ Field `area` BMKG Misleading untuk Sumbar
+
+Klasifikasi area di BMKG menggunakan range geografis besar yang **tidak
+sesuai dengan batas provinsi administratif**:
+
+| Area di BMKG | Lat Range | Provinsi Sebenarnya |
+|---|---|---|
+| "Northern Sumatra" | ~0 to 5 LU | Aceh, Sumut, **Sumbar utara** |
+| "Southern Sumatra" | ~-6 to -2 LS | Bengkulu, Lampung, Sumsel (**BUKAN Sumbar!**) |
+| "Off West Coast of Northern Sumatra" | offshore lat 0-5 LU | Laut barat Aceh/Sumut |
+| "Sumatera Region" | bervariasi | bervariasi |
+
+**Sumatera Barat sebenarnya berada di:**
+- Latitude: **-3.5 LS sampai 1.0 LU** (sebagian besar di -2 sampai 0)
+- Longitude: **97.0 sampai 102.0 BT**
+- Termasuk Mentawai (offshore lat -3.5 to -1)
+
+```js
+// ❌ SALAH: filter "Sumbar" pakai area string match
+const sumbar = events.filter((e) => e.area.includes('Sumatra'));
+// Akan kena banyak event Bengkulu/Lampung yang BUKAN Sumbar
+
+// ✅ BENAR: filter pakai bbox koordinat
+function isInSumbar(lat, lng) {
+	return lat >= -3.5 && lat <= 1.0 && lng >= 97.0 && lng <= 102.0;
+}
+
+const sumbar = events.filter((e) => isInSumbar(e.lat, e.lng));
+```
+
 ## ⚠️ Tidak Tersedia Webhook atau Push Notification
 
 BMKG tidak menyediakan webhook atau push notification resmi. Mekanisme yang
