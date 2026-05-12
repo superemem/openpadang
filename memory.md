@@ -45,6 +45,7 @@
 - ✅ **OSM Overpass Guide** — 4 page dengan UI mockup (commit `1d8fe0c`)
 - ✅ **Live API validation** — semua endpoint di-test, banyak fix di BMKG Cuaca (mapping kecamatan salah, adm1-3 gak work, missing fields) (commit `fc26bee`)
 - ✅ **BMKG Cuaca v2 endpoint discovered** — setelah deep research, ternyata `cuaca.bmkg.go.id/api/df/v1/forecast/adm` support adm1-4 semua. Legacy `api.bmkg.go.id/publik/prakiraan-cuaca` hanya adm4. (commit `304acd6`)
+- ✅ **BMKG Gempa hidden endpoints discovered** — `bmkg-content-inatews.storage.googleapis.com/live30event.xml` punya **~200 events** (vs 15 di gempaterkini), min **M2.0** (vs M5+), plus field unique eventid, status, fokal. Plus `indo_faults_lines.geojson` (310KB) untuk visualisasi patahan. (commit `413305c`)
 - 🔲 Domain registrasi (postponed)
 - 🔲 Guide untuk source Direct API sisa: PetaBencana, OpenWeatherMap, InaTEWS
 - 🔲 First curated dataset (Phase 2): kandidat OSM POI Padang atau BPS Padang demographic
