@@ -82,7 +82,9 @@ Workflow untuk guide berikutnya:
 
 ### Decision yang masih pending
 - 🔲 First dataset to curate — pilih dari shortlist di `docs/04-data-catalog.md` (recommend: OSM POI Padang)
-- 🔲 Custom domain register — kapan? (Phase 1 atau setelah ada dataset pertama)
+- 🔲 Custom domain register — sudah punya substance (15+ pages docs + live demo), worth dipikirin
+- 🔲 Guide untuk Direct API sisa: PetaBencana.id, OpenWeatherMap, InaTEWS warning
+- 🔲 USGS Earthquake API integration untuk fallback historical (>30 jam)
 
 ---
 
