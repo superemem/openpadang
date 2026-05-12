@@ -8,6 +8,58 @@ import { Aside } from '@astrojs/starlight/components';
 API BMKG Cuaca memiliki sejumlah quirks yang perlu diantisipasi sebelum
 deployment. Berikut adalah hasil observasi dari penggunaan production.
 
+## ⚠️ Hanya `adm4` yang Berfungsi
+
+Berdasarkan testing per Mei 2026, hanya parameter `adm4` (kelurahan) yang
+mengembalikan JSON valid. Parameter `adm1`, `adm2`, dan `adm3` mengembalikan
+**HTML landing page BMKG**, bukan data prakiraan.
+
+```js
+// ❌ TIDAK BEKERJA: return HTML, bukan JSON
+fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm2=13.71'); // Kota Padang
+fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm3=13.71.09'); // Kuranji
+
+// ✅ BERFUNGSI: parameter adm4 saja
+fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001'); // Pasar Ambacang
+```
+
+**Workaround untuk data agregat kota/kecamatan:** lakukan multiple request per
+kelurahan dan agregasi di sisi client.
+
+```js
+const PADANG_SAMPLE_PER_KECAMATAN = [
+	{ name: 'Padang Selatan', adm4: '13.71.01.1001' },
+	{ name: 'Padang Timur', adm4: '13.71.02.1001' },
+	// ... 11 kecamatan total
+];
+
+async function aggregateBKota() {
+	const results = await Promise.all(
+		PADANG_SAMPLE_PER_KECAMATAN.map((k) =>
+			fetch(`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${k.adm4}`)
+				.then((r) => r.json())
+		)
+	);
+	// Hitung rata-rata, mode weather, dll di sini
+	return results;
+}
+```
+
+## ⚠️ Header `Accept: application/json` Disarankan
+
+Tanpa header `Accept: application/json`, beberapa user agent mendapat
+**redirect ke HTML landing page**. Selalu sertakan header eksplisit.
+
+```js
+// ❌ Bisa mendapat HTML alih-alih JSON
+const res = await fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001');
+
+// ✅ JSON terjamin
+const res = await fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001', {
+	headers: { 'Accept': 'application/json' }
+});
+```
+
 ## ⚠️ Response Nested Sangat Dalam
 
 Struktur response BMKG Cuaca memiliki nested array 3 level. Banyak kesalahan
@@ -199,8 +251,8 @@ const all = await Promise.all(
 );
 ```
 
-Alternatif: gunakan `adm3` (kecamatan) untuk dapatkan data agregat 11 kecamatan
-Padang dengan hanya 11 request.
+Karena `adm3` tidak bekerja, untuk data per kecamatan ambil 1 kelurahan
+representatif per kecamatan (total ~11 request untuk Padang).
 
 ## ⚠️ Endpoint Kadang Berubah Path
 

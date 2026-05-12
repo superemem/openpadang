@@ -16,21 +16,28 @@ GET https://api.bmkg.go.id/publik/prakiraan-cuaca
 
 ## Query Parameters
 
-Endpoint menerima satu parameter (pilih salah satu sesuai granularity yang
-dibutuhkan):
+<Aside type="caution" title="Penting: Hanya `adm4` yang Work">
+	Berdasarkan testing per Mei 2026, **hanya parameter `adm4` (kelurahan)
+	yang mengembalikan JSON valid**. Parameter `adm1`, `adm2`, dan `adm3`
+	mengembalikan HTML landing page BMKG, bukan data prakiraan.
 
-| Parameter | Level | Format | Contoh (Padang) |
-|---|---|---|---|
-| `adm1` | Provinsi | 2 digit | `13` (Sumatera Barat) |
-| `adm2` | Kabupaten/Kota | 5 digit | `13.71` (Kota Padang) |
-| `adm3` | Kecamatan | 8 digit | `13.71.01` (Padang Barat) |
-| `adm4` | Kelurahan/Desa | 13 digit | `13.71.01.1001` (Belakang Tangsi) |
+	Untuk mendapatkan data agregat (kota, kecamatan), Anda perlu melakukan
+	multiple request per kelurahan dan menggabungkan di sisi client.
+</Aside>
 
-**Contoh URL:**
+Endpoint menerima parameter level wilayah:
+
+| Parameter | Level | Format | Status | Contoh (Padang) |
+|---|---|---|---|---|
+| `adm1` | Provinsi | 2 digit | ❌ Return HTML | `13` (Sumatera Barat) |
+| `adm2` | Kabupaten/Kota | 5 digit | ❌ Return HTML | `13.71` (Kota Padang) |
+| `adm3` | Kecamatan | 8 digit | ❌ Return HTML | `13.71.09` (Kuranji) |
+| `adm4` | Kelurahan/Desa | 13 digit | ✅ Return JSON | `13.71.09.1001` (Pasar Ambacang) |
+
+**Contoh URL yang berfungsi:**
 
 ```
-https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.01.1001
-https://api.bmkg.go.id/publik/prakiraan-cuaca?adm2=13.71
+https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001
 ```
 
 ## Response Schema
@@ -69,9 +76,9 @@ https://api.bmkg.go.id/publik/prakiraan-cuaca?adm2=13.71
 
 ```json
 {
-  "datetime": "string — '202605120700' (YYYYMMDDHHMM, lokal WIB)",
-  "utc_datetime": "string ISO 8601 UTC",
-  "local_datetime": "string ISO 8601 WIB",
+  "datetime": "string ISO 8601 UTC — '2026-05-12T16:00:00Z'",
+  "utc_datetime": "string — '2026-05-12 16:00:00' (UTC tanpa timezone)",
+  "local_datetime": "string — '2026-05-12 23:00:00' (WIB tanpa timezone)",
   "t": "number — suhu °C",
   "tcc": "number — Total Cloud Cover (%)",
   "tp": "number — Total Precipitation (mm)",
@@ -79,15 +86,23 @@ https://api.bmkg.go.id/publik/prakiraan-cuaca?adm2=13.71
   "weather_desc": "string — deskripsi cuaca (e.g., 'Hujan Ringan')",
   "weather_desc_en": "string — English description",
   "wd_deg": "number — wind direction (derajat)",
-  "wd": "string — wind direction abbreviation (e.g., 'SE')",
+  "wd": "string — wind direction origin (e.g., 'NE', 'SW')",
   "wd_to": "string — wind direction destination",
   "ws": "number — wind speed (km/h)",
   "hu": "number — humidity (%)",
   "vs": "number — visibility (m)",
-  "vs_text": "string — visibility text (e.g., '10 km')",
-  "time_index": "string — '0', '3', '6', '9', '12'"
+  "vs_text": "string — visibility text (e.g., '< 9 km')",
+  "time_index": "string — interval index (e.g., '3-4', '6-7')",
+  "analysis_date": "string — '2026-05-12T12:00:00' (waktu BMKG analyze)",
+  "image": "string — URL icon SVG cuaca, e.g., 'https://api-apps.bmkg.go.id/storage/icon/cuaca/berawan-pm.svg'"
 }
 ```
+
+<Aside type="tip" title="Field `image` Useful untuk UI">
+	Field `image` adalah URL ke icon SVG yang sudah disediakan BMKG (untuk
+	day-time dan night-time terpisah). Bisa langsung dipakai di UI tanpa
+	perlu mapping weather code → icon sendiri.
+</Aside>
 
 ## Weather Codes
 
@@ -127,31 +142,42 @@ function weatherIcon(code) {
 
 ## Kode Wilayah Padang — Quick Reference
 
+<Aside type="note">
+	Mapping kode di bawah ini sudah **diverifikasi langsung dari respons API
+	BMKG** (Mei 2026), sesuai standar kode BPS.
+</Aside>
+
 ### Kota Padang (adm2: `13.71`)
 
 | Kode adm3 | Kecamatan |
 |---|---|
-| `13.71.01` | Padang Barat |
+| `13.71.01` | Padang Selatan |
 | `13.71.02` | Padang Timur |
-| `13.71.03` | Padang Utara |
-| `13.71.04` | Padang Selatan |
-| `13.71.05` | Lubuk Begalung |
-| `13.71.06` | Lubuk Kilangan |
-| `13.71.07` | Pauh |
-| `13.71.08` | Kuranji |
-| `13.71.09` | Nanggalo |
-| `13.71.10` | Bungus Teluk Kabung |
+| `13.71.03` | Padang Barat |
+| `13.71.04` | Padang Utara |
+| `13.71.05` | Bungus Teluk Kabung |
+| `13.71.06` | Lubuk Begalung |
+| `13.71.07` | Lubuk Kilangan |
+| `13.71.08` | Pauh |
+| `13.71.09` | Kuranji |
+| `13.71.10` | Nanggalo |
 | `13.71.11` | Koto Tangah |
 
-### Contoh Kelurahan (adm4) — Padang Barat
+### Contoh Kelurahan (adm4) per Kecamatan
 
 | Kode adm4 | Kelurahan |
 |---|---|
-| `13.71.01.1001` | Belakang Tangsi |
-| `13.71.01.1002` | Berok Nipah |
-| `13.71.01.1003` | Flamboyan Baru |
-| `13.71.01.1004` | Kampung Jao |
-| `13.71.01.1005` | Kampung Pondok |
+| `13.71.01.1001` | Belakang Pondok (Padang Selatan) |
+| `13.71.02.1001` | Sawahan (Padang Timur) |
+| `13.71.03.1001` | Flamboyan Baru (Padang Barat) |
+| `13.71.04.1001` | Air Tawar Timur (Padang Utara) |
+| `13.71.05.1001` | Bungus Timur (Bungus Teluk Kabung) |
+| `13.71.06.1001` | Cangkeh Nan Xx (Lubuk Begalung) |
+| `13.71.07.1001` | Indarung (Lubuk Kilangan) |
+| `13.71.08.1001` | Limau Manis (Pauh) |
+| `13.71.09.1001` | Pasar Ambacang (Kuranji) |
+| `13.71.10.1001` | Surau Gadang (Nanggalo) |
+| `13.71.11.1001` | Balai Gadang (Koto Tangah) |
 
 <Aside type="tip" title="Referensi Lengkap">
 	Untuk daftar lengkap kode kelurahan di seluruh Padang, gunakan
@@ -184,9 +210,10 @@ Tidak diperlukan. Endpoint bersifat publik tanpa API key.
 |---|---|
 | Method | GET |
 | Format | JSON |
-| Granularity | adm1 (provinsi) hingga adm4 (kelurahan) |
-| Refresh | 6 jam |
-| Forecast horizon | 3 hari, interval 3 jam |
+| Granularity | **Hanya adm4** (kelurahan) yang work — adm1/adm2/adm3 return HTML |
+| Refresh | 6-12 jam |
+| Forecast horizon | ~51 jam (17 interval @ 3 jam) |
 | CORS | Enabled |
 | Auth | None |
+| Required Headers | `Accept: application/json` recommended |
 | Rate limit | Tidak dipublikasikan (rekomendasi: cache 1-2 jam) |

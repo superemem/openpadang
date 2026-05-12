@@ -31,14 +31,19 @@ agribisnis, hingga sistem warning cuaca ekstrem.
 
 <Steps>
 
-1. **Tentukan kode wilayah** menggunakan format BPS standar. Untuk Padang Barat
-   (Kelurahan Belakang Tangsi), kode `adm4` adalah `13.71.01.1001`. (Lihat
-   referensi lengkap di [Endpoint Reference](/guides/bmkg-cuaca/endpoints/)).
+1. **Tentukan kode wilayah** menggunakan format BPS standar level kelurahan
+   (`adm4`). Contoh: Kelurahan Pasar Ambacang (Kuranji) = `13.71.09.1001`.
+   (Lihat referensi lengkap di [Endpoint Reference](/guides/bmkg-cuaca/endpoints/)).
 
-2. **Akses endpoint** dengan parameter `adm4`:
+   <Aside type="caution">
+     Endpoint **hanya menerima parameter `adm4`** (kelurahan). Parameter
+     `adm1`/`adm2`/`adm3` mengembalikan HTML landing page, bukan JSON.
+   </Aside>
+
+2. **Akses endpoint** dengan parameter `adm4` dan header `Accept: application/json`:
 
    ```
-   https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.01.1001
+   https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001
    ```
 
    Response berupa data prakiraan dalam format JSON.
@@ -48,12 +53,16 @@ agribisnis, hingga sistem warning cuaca ekstrem.
    ```json
    {
      "lokasi": {
-       "adm1": "Sumatera Barat",
-       "adm2": "Kota Padang",
-       "adm3": "Padang Barat",
-       "adm4": "Belakang Tangsi",
-       "lon": 100.36,
-       "lat": -0.95,
+       "adm1": "13",
+       "adm2": "13.71",
+       "adm3": "13.71.09",
+       "adm4": "13.71.09.1001",
+       "provinsi": "Sumatera Barat",
+       "kotkab": "Kota Padang",
+       "kecamatan": "Kuranji",
+       "desa": "Pasar Ambacang",
+       "lon": 100.4023036088,
+       "lat": -0.931069884,
        "timezone": "Asia/Jakarta"
      },
      "data": [
@@ -62,17 +71,25 @@ agribisnis, hingga sistem warning cuaca ekstrem.
          "cuaca": [
            [
              {
-               "datetime": "202605120700",
-               "t": 28,
-               "tcc": 75,
-               "tp": 0.2,
-               "weather": 60,
-               "weather_desc": "Hujan Ringan",
-               "hu": 85,
-               "wd": "SE",
-               "ws": 8,
-               "vs_text": "10 km",
-               "time_index": "0"
+               "datetime": "2026-05-12T16:00:00Z",
+               "utc_datetime": "2026-05-12 16:00:00",
+               "local_datetime": "2026-05-12 23:00:00",
+               "t": 25,
+               "tcc": 100,
+               "tp": 0.4,
+               "weather": 3,
+               "weather_desc": "Berawan",
+               "weather_desc_en": "Mostly Cloudy",
+               "hu": 93,
+               "wd_deg": 72,
+               "wd": "NE",
+               "wd_to": "SW",
+               "ws": 2.5,
+               "vs": 8002,
+               "vs_text": "< 9 km",
+               "time_index": "3-4",
+               "analysis_date": "2026-05-12T12:00:00",
+               "image": "https://api-apps.bmkg.go.id/storage/icon/cuaca/berawan-pm.svg"
              }
              // ... interval 3 jam berikutnya
            ]
@@ -93,7 +110,8 @@ agribisnis, hingga sistem warning cuaca ekstrem.
 <TabItem label="cURL">
 
 ```bash
-curl -s "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.01.1001" \
+curl -s -H "Accept: application/json" -H "User-Agent: curl/8.0" \
+  "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001" \
   | jq '.data[0].cuaca[0][0]'
 ```
 
@@ -101,9 +119,10 @@ curl -s "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.01.1001" \
 <TabItem label="JavaScript">
 
 ```js
-const adm4 = '13.71.01.1001'; // Kelurahan Belakang Tangsi, Padang Barat
+const adm4 = '13.71.09.1001'; // Kelurahan Pasar Ambacang, Kuranji
 const res = await fetch(
-	`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`
+	`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`,
+	{ headers: { 'Accept': 'application/json' } }
 );
 const { lokasi, data } = await res.json();
 
@@ -120,9 +139,10 @@ console.log(`Kelembapan ${cuacaTerkini.hu}% · Angin ${cuacaTerkini.ws} km/h`);
 ```python
 import requests
 
-adm4 = "13.71.01.1001"  # Kelurahan Belakang Tangsi, Padang Barat
+adm4 = "13.71.09.1001"  # Kelurahan Pasar Ambacang, Kuranji
 url = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={adm4}"
-res = requests.get(url).json()
+headers = {"Accept": "application/json"}
+res = requests.get(url, headers=headers).json()
 
 lokasi = res["lokasi"]
 cuaca = res["data"][0]["cuaca"][0][0]
@@ -142,7 +162,8 @@ import { json } from '@sveltejs/kit';
 export async function GET({ params }) {
 	const { adm4 } = params;
 	const res = await fetch(
-		`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`
+		`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`,
+		{ headers: { 'Accept': 'application/json' } }
 	);
 	const data = await res.json();
 	return json(data);
@@ -159,10 +180,11 @@ menampilkan multiple lokasi, lakukan parallel request:
 
 ```js
 const PADANG_LOKASI = [
-	{ name: 'Padang Barat', adm4: '13.71.01.1001' },
+	{ name: 'Padang Selatan', adm4: '13.71.01.1001' },
 	{ name: 'Padang Timur', adm4: '13.71.02.1001' },
-	{ name: 'Padang Utara', adm4: '13.71.03.1001' },
-	{ name: 'Padang Selatan', adm4: '13.71.04.1001' },
+	{ name: 'Padang Barat', adm4: '13.71.03.1001' },
+	{ name: 'Padang Utara', adm4: '13.71.04.1001' },
+	{ name: 'Kuranji (Pasar Ambacang)', adm4: '13.71.09.1001' },
 	// ... tambahkan kelurahan lain sesuai kebutuhan
 ];
 

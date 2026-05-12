@@ -217,21 +217,46 @@ minimum:
 
 Tanpa atribusi, penggunaan data OSM **melanggar lisensi**.
 
-## ⚠️ Outage dan Maintenance
+## ⚠️ Outage, Maintenance, dan Reliability Mirror
 
 Server Overpass publik terkadang:
 - HTTP 504 (gateway timeout)
 - HTTP 429 (too many requests)
-- Slow response saat peak hour
+- HTTP 406 (Not Acceptable) — biasanya karena Content-Type tidak di-set
+- Response empty saat peak hour
 - Maintenance scheduled
 
-**Defensive coding:**
+<Aside type="tip" title="Observasi per Mei 2026">
+	Server utama (`overpass-api.de`) terkadang mengembalikan **response
+	kosong** untuk query bbox kecil di Padang, sementara mirror
+	`overpass.kumi.systems` mengembalikan data lengkap. Mirror lebih
+	reliable untuk testing.
+</Aside>
+
+**Wajib set `Content-Type` header** saat POST. Tanpa itu, server return HTTP 406:
+
+```js
+// ❌ SALAH: tanpa Content-Type
+const res = await fetch('https://overpass-api.de/api/interpreter', {
+	method: 'POST',
+	body: `data=${encodeURIComponent(query)}`,
+}); // → HTTP 406 Not Acceptable
+
+// ✅ BENAR: dengan Content-Type
+const res = await fetch('https://overpass-api.de/api/interpreter', {
+	method: 'POST',
+	body: `data=${encodeURIComponent(query)}`,
+	headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+});
+```
+
+**Defensive coding dengan mirror fallback:**
 
 ```js
 async function overpassQuery(query, retries = 3) {
 	const urls = [
+		'https://overpass.kumi.systems/api/interpreter', // reliable
 		'https://overpass-api.de/api/interpreter',
-		'https://overpass.kumi.systems/api/interpreter',
 		'https://overpass.openstreetmap.fr/api/interpreter',
 	];
 
@@ -246,11 +271,16 @@ async function overpassQuery(query, retries = 3) {
 			});
 
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			return await res.json();
+			const data = await res.json();
+			if (!data.elements?.length && attempt < retries - 1) {
+				// Empty response, try next mirror
+				throw new Error('Empty response');
+			}
+			return data;
 		} catch (err) {
-			console.warn(`Overpass attempt ${attempt + 1} failed:`, err);
+			console.warn(`Overpass attempt ${attempt + 1} (${url}) failed:`, err);
 			if (attempt === retries - 1) throw err;
-			await new Promise((r) => setTimeout(r, 2000)); // 2s backoff
+			await new Promise((r) => setTimeout(r, 2000));
 		}
 	}
 }

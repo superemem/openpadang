@@ -119,7 +119,7 @@ keputusan terkait pelaksanaan event.
     <div style="font-size: 24px;">⛈️</div>
     <div style="flex: 1;">
       <div style="color: #991b1b; font-weight: 600; font-size: 14px;">Peringatan Hujan Lebat</div>
-      <div style="color: #b91c1c; font-size: 13px; margin-top: 4px;">Pauh, Padang · 16:00 - 19:00 WIB</div>
+      <div style="color: #b91c1c; font-size: 13px; margin-top: 4px;">Kuranji, Padang · 16:00 - 19:00 WIB</div>
       <div style="color: #475569; font-size: 12px; margin-top: 8px; line-height: 1.5;">
         Diprediksi <strong>hujan lebat (15-20mm)</strong> dengan kemungkinan petir.
         Pertimbangkan untuk menunda aktivitas outdoor.
@@ -139,12 +139,13 @@ keputusan terkait pelaksanaan event.
 import requests
 from datetime import datetime, timedelta
 
-ADM4 = "13.71.07.1001"  # Pauh, Padang
+ADM4 = "13.71.09.1001"  # Pasar Ambacang, Kuranji
 HEAVY_RAIN_CODES = [63, 95, 97]  # Hujan Lebat, Hujan Petir
 
 def check_heavy_rain():
     url = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={ADM4}"
-    data = requests.get(url).json()
+    headers = {"Accept": "application/json"}
+    data = requests.get(url, headers=headers).json()
 
     # Prakiraan 6 jam ke depan (2 interval @ 3 jam)
     forecasts = data["data"][0]["cuaca"][0][:2]
@@ -313,25 +314,29 @@ Padang dengan data per kelurahan.
 ### Implementasi
 
 ```js
-const PADANG_KECAMATAN = [
-	{ name: 'Padang Barat', adm3: '13.71.01' },
-	{ name: 'Padang Timur', adm3: '13.71.02' },
-	{ name: 'Padang Utara', adm3: '13.71.03' },
-	{ name: 'Padang Selatan', adm3: '13.71.04' },
-	{ name: 'Lubuk Begalung', adm3: '13.71.05' },
-	{ name: 'Lubuk Kilangan', adm3: '13.71.06' },
-	{ name: 'Pauh', adm3: '13.71.07' },
-	{ name: 'Kuranji', adm3: '13.71.08' },
-	{ name: 'Nanggalo', adm3: '13.71.09' },
-	{ name: 'Bungus Teluk Kabung', adm3: '13.71.10' },
-	{ name: 'Koto Tangah', adm3: '13.71.11' },
+// CATATAN: BMKG hanya menerima adm4 (kelurahan), bukan adm3 (kecamatan).
+// Untuk heatmap per kecamatan, ambil 1 kelurahan representatif per kecamatan.
+
+const PADANG_KECAMATAN_SAMPLE = [
+	{ name: 'Padang Selatan', adm4: '13.71.01.1001' },
+	{ name: 'Padang Timur', adm4: '13.71.02.1001' },
+	{ name: 'Padang Barat', adm4: '13.71.03.1001' },
+	{ name: 'Padang Utara', adm4: '13.71.04.1001' },
+	{ name: 'Bungus Teluk Kabung', adm4: '13.71.05.1001' },
+	{ name: 'Lubuk Begalung', adm4: '13.71.06.1001' },
+	{ name: 'Lubuk Kilangan', adm4: '13.71.07.1001' },
+	{ name: 'Pauh', adm4: '13.71.08.1001' },
+	{ name: 'Kuranji', adm4: '13.71.09.1001' },
+	{ name: 'Nanggalo', adm4: '13.71.10.1001' },
+	{ name: 'Koto Tangah', adm4: '13.71.11.1001' },
 ];
 
 async function loadHeatmap() {
 	const results = await Promise.all(
-		PADANG_KECAMATAN.map(async (k) => {
+		PADANG_KECAMATAN_SAMPLE.map(async (k) => {
 			const res = await fetch(
-				`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm3=${k.adm3}`
+				`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${k.adm4}`,
+				{ headers: { 'Accept': 'application/json' } }
 			);
 			const data = await res.json();
 			return { ...k, suhu: data.data[0].cuaca[0][0].t };

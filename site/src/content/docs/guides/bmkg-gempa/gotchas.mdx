@@ -53,22 +53,34 @@ function parseLintang(str) {
 }
 ```
 
-## ⚠️ Field `Dirasakan` dan `Shakemap` Bersifat Opsional
+## ⚠️ Field `Dirasakan` Bisa Bernilai `"-"`
 
-- `Dirasakan` hanya tersedia apabila telah ada laporan dari warga
-  (umumnya 5-15 menit setelah kejadian)
-- `Shakemap` hanya tersedia untuk gempa yang cukup signifikan
+Berdasarkan testing per Mei 2026 pada endpoint `autogempa.json`, field
+`Dirasakan` **selalu ada di response**, namun bernilai `"-"` (string dash)
+apabila belum ada laporan dari warga. Bukan `undefined` atau missing.
+
+`Shakemap` umumnya tersedia untuk gempa yang sudah dianalisis BMKG.
 
 ```js
-// ❌ SALAH: asumsi field selalu tersedia
-const dirasakan = gempa.Dirasakan; // dapat bernilai undefined
+// ❌ SALAH: anggap "-" sebagai data valid
+console.log(gempa.Dirasakan); // bisa "-"
 
-// ✅ BENAR: optional handling
-const dirasakan = gempa.Dirasakan ?? 'Belum ada laporan';
+// ✅ BENAR: check explicit untuk "-" atau empty
+const dirasakan =
+	gempa.Dirasakan && gempa.Dirasakan !== '-'
+		? gempa.Dirasakan
+		: 'Belum ada laporan dari warga';
+
 const shakemapUrl = gempa.Shakemap
 	? `https://data.bmkg.go.id/DataMKG/TEWS/${gempa.Shakemap}`
 	: null;
 ```
+
+<Aside type="note">
+	Pada endpoint `gempaterkini.json` dan `gempadirasakan.json`, field
+	`Dirasakan` dan `Shakemap` dapat benar-benar tidak ada (bukan `"-"`)
+	untuk entry tertentu. Tetap gunakan defensive optional checking.
+</Aside>
 
 ## ⚠️ Format `Wilayah` Tidak Konsisten
 
