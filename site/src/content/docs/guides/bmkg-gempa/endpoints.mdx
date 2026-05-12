@@ -1,11 +1,12 @@
 ---
 title: BMKG Gempa — Endpoint Reference
-description: 3 endpoint JSON BMKG untuk data gempa Indonesia. Lengkap dengan response schema.
+description: Reference lengkap 3 endpoint JSON BMKG untuk data gempa Indonesia, beserta schema response.
 ---
 
 import { Aside, Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 
-BMKG menyediakan 3 endpoint JSON publik untuk data gempa, semua **tanpa auth**.
+BMKG menyediakan 3 endpoint JSON publik untuk data gempa. Seluruh endpoint
+dapat diakses tanpa autentikasi.
 
 ## Base URL
 
@@ -24,8 +25,8 @@ https://data.bmkg.go.id/DataMKG/TEWS/
 GET https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json
 ```
 
-**Refresh:** ~6 detik latency dari kejadian
-**Returns:** 1 gempa paling baru
+**Refresh rate:** Latency sekitar 6 detik dari kejadian
+**Returns:** Satu gempa paling baru
 
 ### Response Schema
 
@@ -42,8 +43,8 @@ GET https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json
       "Magnitude": "string — '3.4' (decimal)",
       "Kedalaman": "string — '10 km'",
       "Wilayah": "string — '21 km BaratLaut KOTAPADANG-SUMBAR'",
-      "Potensi": "string — 'Tidak berpotensi tsunami' atau warning",
-      "Dirasakan": "string optional — 'II Padang' (MMI scale)",
+      "Potensi": "string — 'Tidak berpotensi tsunami' atau peringatan",
+      "Dirasakan": "string optional — 'II Padang' (skala MMI)",
       "Shakemap": "string optional — filename peta intensitas"
     }
   }
@@ -52,12 +53,12 @@ GET https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json
 
 ### Shakemap Image
 
-Kalau field `Shakemap` ada, akses image-nya di:
+Apabila field `Shakemap` tersedia, image dapat diakses pada:
 ```
 https://data.bmkg.go.id/DataMKG/TEWS/{Shakemap}
 ```
 
-Format: JPEG. Tampilkan peta intensitas guncangan.
+Format: JPEG. Menampilkan peta intensitas guncangan.
 
 ---
 
@@ -70,8 +71,8 @@ Format: JPEG. Tampilkan peta intensitas guncangan.
 GET https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json
 ```
 
-**Refresh:** 5 menit
-**Returns:** Array 15 gempa terbaru (M≥5 atau notable)
+**Refresh rate:** Sekitar 5 menit
+**Returns:** Array 15 gempa terbaru (umumnya M≥5 atau notable)
 
 ### Response Schema
 
@@ -91,13 +92,14 @@ GET https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json
         "Wilayah": "...",
         "Potensi": "..."
       }
-      // ... 14 more
+      // ... 14 entry lainnya
     ]
   }
 }
 ```
 
-Schema per gempa sama dengan `autogempa.json`, **kecuali `Dirasakan` dan `Shakemap`** (tidak selalu ada).
+Skema per entry sama dengan `autogempa.json`, dengan pengecualian field
+`Dirasakan` dan `Shakemap` yang tidak selalu tersedia.
 
 ---
 
@@ -110,12 +112,13 @@ Schema per gempa sama dengan `autogempa.json`, **kecuali `Dirasakan` dan `Shakem
 GET https://data.bmkg.go.id/DataMKG/TEWS/gempadirasakan.json
 ```
 
-**Refresh:** Variable (depend gempa & laporan)
-**Returns:** Array 15 gempa yang dilaporkan dirasakan warga
+**Refresh rate:** Variabel (tergantung kejadian dan laporan)
+**Returns:** Array 15 gempa yang dilaporkan dirasakan oleh masyarakat
 
 ### Response Schema
 
-Sama dengan `gempaterkini.json`, dengan field tambahan `Dirasakan` (MMI scale + lokasi):
+Skema sama dengan `gempaterkini.json`, dengan tambahan field `Dirasakan`
+yang berisi skala MMI dan lokasi:
 
 ```json
 {
@@ -123,52 +126,60 @@ Sama dengan `gempaterkini.json`, dengan field tambahan `Dirasakan` (MMI scale + 
 }
 ```
 
-**MMI Scale interpretation:**
-- I = Tidak terasa (cuma alat detect)
-- II-III = Terasa di lantai atas
-- IV-V = Terasa banyak orang, barang gantung goyang
-- VI-VII = Plester retak, dinding pecah
-- VIII+ = Bangunan rusak
+**Interpretasi skala MMI:**
+
+| Skala | Deskripsi |
+|---|---|
+| I | Tidak terasa (hanya terdeteksi alat) |
+| II-III | Terasa di lantai atas bangunan |
+| IV-V | Terasa banyak orang, barang gantung bergoyang |
+| VI-VII | Plester retak, dinding pecah |
+| VIII+ | Kerusakan bangunan |
 
 ---
 
-## Endpoint Lain (Tambahan)
+## Endpoint Pendukung
 
-BMKG juga punya endpoint lain yang kurang dipublikasikan tapi useful:
+BMKG juga menyediakan beberapa endpoint tambahan yang kurang
+terdokumentasikan namun bermanfaat:
 
-| Endpoint | Purpose |
+| Endpoint | Tujuan |
 |---|---|
 | `https://data.bmkg.go.id/datamkg/TEWS/data.xml` | XML feed (alternatif JSON) |
 | `https://inatews.bmkg.go.id/...` | Tsunami warning system |
-| `https://repogempa.bmkg.go.id/` | Repositori gempa historis komplit |
+| `https://repogempa.bmkg.go.id/` | Repositori gempa historis lengkap |
 
-<Aside type="caution" title="Stability">
-	Endpoint XML & repogempa mungkin berubah tanpa notice. Untuk production,
-	stick ke 3 endpoint JSON utama di atas.
+<Aside type="caution" title="Stabilitas">
+	Endpoint XML dan repogempa dapat berubah tanpa notifikasi. Untuk
+	implementasi production, sebaiknya menggunakan 3 endpoint JSON utama
+	di atas.
 </Aside>
 
 ## CORS
 
-Semua endpoint di atas **support CORS** (cek headers `Access-Control-Allow-Origin: *`).
-Aman dipake dari browser/SPA tanpa proxy.
+Seluruh endpoint mendukung CORS (`Access-Control-Allow-Origin: *`), sehingga
+dapat dipanggil langsung dari aplikasi browser atau SPA tanpa proxy server.
 
 ## Rate Limit
 
-BMKG tidak publish rate limit resmi, tapi observasi komunitas:
-- Polling 5-10 detik per request = aman
-- Polling < 1 detik per request = berisiko rate-limit / IP block
-- **Rekomendasi:** poll tiap 30 detik untuk `autogempa.json`, cache di sisi lo
+BMKG tidak mempublikasikan rate limit resmi. Berdasarkan observasi komunitas:
 
-## Authentication
+- Polling dengan interval kurang dari 1 detik berisiko menghasilkan
+  rate-limit atau IP block
+- Polling 5-10 detik per request aman, namun kurang efisien
+- **Rekomendasi:** polling 30 detik untuk `autogempa.json` dengan
+  caching di sisi server
 
-**Tidak ada.** Semua endpoint public, no API key required.
+## Autentikasi
+
+Tidak diperlukan. Seluruh endpoint bersifat publik tanpa API key.
 
 ---
 
-## Quick Reference Table
+## Quick Reference
 
 | Endpoint | Refresh | Returns | Use Case |
 |---|---|---|---|
-| `autogempa.json` | ~6s | 1 gempa terbaru | Real-time alert |
-| `gempaterkini.json` | ~5min | 15 gempa terbaru | Dashboard, history |
-| `gempadirasakan.json` | Variable | 15 dirasakan warga | Community impact analysis |
+| `autogempa.json` | ~6 detik | 1 gempa terbaru | Real-time alert |
+| `gempaterkini.json` | ~5 menit | 15 gempa terbaru | Dashboard, history |
+| `gempadirasakan.json` | Variabel | 15 dirasakan warga | Analisis dampak komunitas |

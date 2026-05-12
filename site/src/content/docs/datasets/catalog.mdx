@@ -1,36 +1,37 @@
 ---
 title: Sumber Data Publik Padang & Sumbar
-description: Inventory sumber data publik untuk Padang dan Sumatera Barat dengan dokumentasi cara pakai per source.
+description: Inventory sumber data publik untuk Padang dan Sumatera Barat dengan dokumentasi cara penggunaannya per source.
 ---
 
 import { Badge, Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-> **Status:** Catalog sedang disusun. Update terakhir: Mei 2026.
+> **Status:** Katalog sedang dalam tahap penyusunan. Update terakhir: Mei 2026.
 
-OpenPadang inventarisasi sumber data publik tentang Padang & Sumbar.
-Tujuan: **single discovery point** untuk siapa pun yang butuh data — gak
-perlu cari ke 10 tempat berbeda.
+OpenPadang menginventarisasi sumber data publik tentang Padang dan Sumatera
+Barat. Tujuannya menjadi **single discovery point** bagi pengguna yang
+membutuhkan data — tanpa perlu mencari di berbagai portal terpisah.
 
 ## Pendekatan: Hybrid
 
-| Tier | Cara Akses | Yang OpenPadang Lakukan |
+| Tier | Cara Akses | Peran OpenPadang |
 |---|---|---|
-| 🟢 **Direct API** | User akses langsung ke source asli | Bikinin **Quick Start, Code Examples, Use Cases, Gotchas** |
-| 🟡 **Curated** | Via OpenPadang API atau download repo | Scrape, transform, standardize, host |
-| 🔴 **To Be Curated** | Planned | Roadmap berikutnya |
-| 💎 **Partner Required** | Butuh akses resmi | Permohonan ke Dishub/BPBD/dll |
+| 🟢 **Direct API** | Akses langsung ke source asli | Menyediakan Quick Start, Code Examples, Use Cases, dan Gotchas |
+| 🟡 **Curated** | Melalui API OpenPadang atau download repo | Scrape, transform, standardize, dan host |
+| 🔴 **To Be Curated** | Planned | Pada roadmap berikutnya |
+| 💎 **Partner Required** | Memerlukan akses resmi | Permohonan kepada Dishub, BPBD, atau institusi terkait |
 
-> Untuk Tier "Direct API" yang dokumentasinya jelek atau tidak ada,
-> OpenPadang berfungsi sebagai **documentation & education layer**. Setiap
-> source punya halaman guide sendiri (planned di Phase 1-2).
+> Untuk Tier "Direct API" yang dokumentasinya terbatas, OpenPadang berperan
+> sebagai **documentation & education layer**. Setiap source memiliki halaman
+> guide tersendiri.
 
 ---
 
-## 🟢 Tier 1: Direct API (FREE, langsung jalan)
+## 🟢 Tier 1: Direct API (Gratis, Siap Pakai)
 
-Sumber-sumber ini **udah ada API resmi & format bagus**. OpenPadang **tidak
-re-host** — user akses langsung ke source asli. Yang kami sediakan: dokumentasi
-cara pakai & use case Padang-specific.
+Sumber-sumber berikut sudah memiliki API resmi dengan format yang baik.
+OpenPadang **tidak melakukan re-hosting** — pengguna mengakses langsung ke
+source asli. OpenPadang menyediakan dokumentasi cara penggunaan dan use case
+spesifik untuk konteks Padang/Sumbar.
 
 ### OpenStreetMap (OSM) — Overpass API
 
@@ -39,15 +40,15 @@ cara pakai & use case Padang-specific.
 - **Source:** [overpass-turbo.eu](https://overpass-turbo.eu/)
 - **API Endpoint:** `https://overpass-api.de/api/interpreter`
 - **Format:** GeoJSON
-- **License:** ODbL (Open Database License — attribution wajib)
-- **Refresh:** Real-time community-edited
-- **Rate Limit:** ~10,000 query/day per IP
+- **License:** ODbL (Open Database License — atribusi wajib)
+- **Refresh:** Real-time (community-edited)
+- **Rate Limit:** Sekitar 10,000 query per hari per IP
 
-**OpenPadang akan sediakan:**
-- Quick Start: query Padang POI dalam 5 menit
-- Code examples: cURL, JS, Python
-- Use cases: cari semua masjid/halte/resto di Padang
-- Gotchas: bbox vs area selection, escape characters
+**Dokumentasi OpenPadang akan menyediakan:**
+- Quick Start: query POI Padang dalam 5 menit
+- Code examples: cURL, JavaScript, Python
+- Use cases: pencarian masjid, halte, restoran di Padang
+- Gotchas: perbedaan bbox vs area selection, escape characters
 
 ### BMKG Gempa Real-Time
 
@@ -55,18 +56,18 @@ cara pakai & use case Padang-specific.
 
 - **Source:** [data.bmkg.go.id/DataMKG/TEWS/](https://data.bmkg.go.id/DataMKG/TEWS/)
 - **Endpoints:**
-  - `autogempa.json` — gempa terbaru (6 detik latency)
+  - `autogempa.json` — gempa terbaru (latency ~6 detik)
   - `gempaterkini.json` — 15 gempa terakhir
   - `gempadirasakan.json` — gempa yang dirasakan warga
 - **Format:** JSON
 - **License:** Public domain (data pemerintah)
-- **Auth:** No API key needed
+- **Autentikasi:** Tidak diperlukan
 
-📘 **OpenPadang Guide:**
-- [Quick Start](/guides/bmkg-gempa/quickstart/) — 5 menit setup
-- [Endpoint Reference](/guides/bmkg-gempa/endpoints/) — full schema
-- [Use Cases Padang](/guides/bmkg-gempa/use-cases/) — 5 skenario real
-- [Gotchas & Limitations](/guides/bmkg-gempa/gotchas/) — pitfalls & quirks
+📘 **Dokumentasi OpenPadang:**
+- [Quick Start](/guides/bmkg-gempa/quickstart/) — setup 5 menit
+- [Endpoint Reference](/guides/bmkg-gempa/endpoints/) — schema lengkap
+- [Use Cases Padang](/guides/bmkg-gempa/use-cases/) — 5 skenario implementasi
+- [Gotchas & Limitations](/guides/bmkg-gempa/gotchas/) — pitfalls dan quirks
 
 ### BMKG Cuaca Prakiraan
 
@@ -75,10 +76,10 @@ cara pakai & use case Padang-specific.
 - **Source:** `api.bmkg.go.id/publik/prakiraan-cuaca?adm4=<kode>`
 - **Format:** JSON
 - **Refresh:** 6 jam
-- **Coverage:** Per kelurahan via kode `adm4`
+- **Coverage:** Per kelurahan menggunakan kode `adm4`
 
-**OpenPadang akan sediakan:**
-- Mapping kelurahan Padang → kode adm4
+**Dokumentasi OpenPadang akan menyediakan:**
+- Mapping kelurahan Padang ke kode adm4
 - Use cases: weather widget per kecamatan, daily forecast aggregation
 
 ### InaTEWS BMKG (Tsunami Early Warning)
@@ -86,12 +87,12 @@ cara pakai & use case Padang-specific.
 <Badge text="Critical for Padang" variant="danger" />
 
 - **Source:** [inatews.bmkg.go.id](https://inatews.bmkg.go.id/)
-- **Format:** XML / scrape
+- **Format:** XML / web scrape
 - **Refresh:** Real-time
 - **Coverage:** Indonesia tsunami warning
 
-**OpenPadang akan sediakan:**
-- Quick start subscribe ke warning feed
+**Dokumentasi OpenPadang akan menyediakan:**
+- Quick start subscribe warning feed
 - Use cases: tsunami alert PWA, evacuation trigger
 - Gotchas: false positive handling, polling vs webhook
 
@@ -103,36 +104,37 @@ cara pakai & use case Padang-specific.
 - **License:** Open-source (CC)
 - **Refresh:** Real-time crowd-source
 
-**OpenPadang akan sediakan:**
+**Dokumentasi OpenPadang akan menyediakan:**
 - Filter Sumbar/Padang province queries
-- Use cases: combine dengan BMKG untuk full disaster picture
-- Integration patterns dengan map app
+- Use cases: kombinasi dengan BMKG untuk full disaster picture
+- Integration patterns dengan map application
 
 ### OpenWeatherMap
 
 - **Source:** [openweathermap.org/api](https://openweathermap.org/api)
 - **Format:** JSON REST
-- **License:** Free tier (1000 calls/day) — butuh API key
-- **Coverage:** Global, support Padang
+- **License:** Free tier (1000 calls/day) — memerlukan API key
+- **Coverage:** Global, mendukung Padang
 
-**OpenPadang akan sediakan:**
-- Padang-specific city ID setup
-- Comparison dengan BMKG (mana lebih akurat untuk kasus apa)
+**Dokumentasi OpenPadang akan menyediakan:**
+- Setup city ID khusus Padang
+- Perbandingan dengan BMKG (use case mana yang lebih sesuai)
 - Use cases: hyperlocal weather widget
 
 ---
 
 ## 🟡 Tier 2: Curated by OpenPadang
 
-Sumber yang **format aslinya jelek** atau **gak ada API resmi**. OpenPadang
-scrape, transform, standardize, dan host di repo.
+Sumber dengan format asli yang sulit dikonsumsi langsung atau belum memiliki
+API resmi. OpenPadang melakukan scraping, transformation, standardisasi, dan
+hosting di repository.
 
 ### BPS Kota Padang — Demografi
 
 <Badge text="To Curate" variant="note" />
 
 - **Source asli:** [padangkota.bps.go.id](https://padangkota.bps.go.id/) (web table, PDF)
-- **OpenPadang akan provide:** CSV time-series (penduduk per kecamatan, age group, sex ratio, kepadatan)
+- **Output OpenPadang:** CSV time-series (penduduk per kecamatan, age group, sex ratio, kepadatan)
 - **Refresh:** Tahunan (manual scrape saat publikasi BPS rilis)
 
 ### BPS Sumatera Barat — Ekonomi & Sosial
@@ -140,25 +142,25 @@ scrape, transform, standardize, dan host di repo.
 <Badge text="To Curate" variant="note" />
 
 - **Source asli:** [sumbar.bps.go.id](https://sumbar.bps.go.id/)
-- **OpenPadang akan provide:** CSV statistik provinsi (inflasi, kemiskinan, ketenagakerjaan)
+- **Output OpenPadang:** CSV statistik provinsi (inflasi, kemiskinan, ketenagakerjaan)
 
 ### Trans Padang GTFS
 
 <Badge text="To Build" variant="note" />
 
-- **Source asli:** Belum ada GTFS publik (Padang Mobile internal)
-- **OpenPadang akan build:** GTFS format community-maintained
-- Routes, halte, jadwal — dari article publik + observasi lapangan
-- Submit ke MobilityDatabase.org → otomatis muncul di Google Maps Transit
+- **Source asli:** Belum ada GTFS publik (Padang Mobile bersifat internal)
+- **Output OpenPadang:** GTFS format community-maintained
+- Routes, halte, jadwal — disusun dari artikel publik dan observasi lapangan
+- Submit ke MobilityDatabase.org untuk integrasi otomatis ke Google Maps Transit
 
 ---
 
 ## 🔴 Tier 3: To Be Curated (Planned)
 
-Sumber yang diketahui ada tapi belum di-eksplor.
+Sumber yang telah diidentifikasi namun belum dieksplorasi lebih lanjut.
 
 - **Portal Data Sumbar** — [data.sumbarprov.go.id](https://data.sumbarprov.go.id/)
-- **Geoportal Sumbar** — [geoportal.sumbarprov.go.id](https://geoportal.sumbarprov.go.id/) (butuh register)
+- **Geoportal Sumbar** — [geoportal.sumbarprov.go.id](https://geoportal.sumbarprov.go.id/) (memerlukan registrasi)
 - **Jadesta Sumbar** (Desa Wisata) — [sumbar.jadesta.com](https://sumbar.jadesta.com/)
 - **Satu Data Kemenparekraf** — [satudata.kemenparekraf.go.id](https://satudata.kemenparekraf.go.id/)
 - **KPU** (Election Data) — [data.kpu.go.id](https://data.kpu.go.id/)
@@ -167,7 +169,7 @@ Sumber yang diketahui ada tapi belum di-eksplor.
 
 ## 💎 Tier 4: Partner Required
 
-Data publik yang butuh akses resmi via permohonan.
+Data publik yang memerlukan akses resmi melalui permohonan ke institusi.
 
 - **Trans Padang GPS Real-Time** — Dishub Kota Padang
 - **Data Shelter ZMS (Zona Aman Tsunami)** — BPBD Sumbar
@@ -177,14 +179,15 @@ Data publik yang butuh akses resmi via permohonan.
 
 ## ⚡ Aggregation Endpoints (Planned)
 
-OpenPadang akan sediakan **combined endpoints** untuk efficiency. 1 request,
-multiple data sources, Padang-specific filtering.
+OpenPadang akan menyediakan **combined endpoints** untuk efisiensi konsumsi
+data. Satu request menghasilkan response dari multiple sources dengan
+filtering Padang-specific.
 
 | Endpoint | Combine | Use Case |
 |---|---|---|
 | `/api/realtime/padang` | BMKG gempa + BMKG cuaca + PetaBencana banjir + OWM AQI | Dashboard hyperlocal Padang |
-| `/api/disaster/sumbar` | BMKG gempa + InaTEWS tsunami + PetaBencana | Disaster ops |
-| `/api/poi/padang` | OSM POI filter Padang + kategori normalization | Map app |
+| `/api/disaster/sumbar` | BMKG gempa + InaTEWS tsunami + PetaBencana | Disaster operation center |
+| `/api/poi/padang` | OSM POI filter Padang + kategorisasi terstandar | Map application |
 
 ---
 
@@ -197,19 +200,19 @@ multiple data sources, Padang-specific filtering.
 - TribunPadang
 
 ### Universitas
-- **UNAND eskripsi** — riset Trans Padang, banjir, dll
+- **UNAND eskripsi** — riset Trans Padang, banjir, dan topik lainnya
 - **UNP repository** — skripsi mahasiswa
 
 ---
 
 ## 📊 Total Inventory
 
-| Tier | Sumber | Effort OpenPadang |
+| Tier | Sumber | Peran OpenPadang |
 |---|---|---|
 | 🟢 Direct API | 6+ | Dokumentasi (Quick Start, Examples, Use Cases) |
 | 🟡 Curated | 3 (planned) | Scrape, transform, host |
-| 🔴 To Be Curated | 5+ | Future curation |
-| 💎 Partner Required | 4+ | Outreach |
+| 🔴 To Be Curated | 5+ | Curation pada fase berikutnya |
+| 💎 Partner Required | 4+ | Outreach institusional |
 | ⚡ Aggregation | 3 (planned) | Custom build di api.openpadang.info |
 
 ---
@@ -217,7 +220,7 @@ multiple data sources, Padang-specific filtering.
 ## Kontribusi
 
 <LinkCard
-	title="Tambah Data Source"
-	description="Tahu sumber data publik Padang/Sumbar yang belum masuk? Open Issue atau langsung PR."
+	title="Tambahkan Sumber Data"
+	description="Apabila Anda mengetahui sumber data publik Padang/Sumbar yang belum tercantum, mohon buat Issue atau Pull Request."
 	href="https://github.com/superemem/openpadang/issues/new"
 />

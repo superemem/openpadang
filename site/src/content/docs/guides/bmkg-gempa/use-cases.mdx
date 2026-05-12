@@ -1,22 +1,47 @@
 ---
 title: BMKG Gempa — Use Cases Padang
-description: 5 skenario nyata pakai BMKG Gempa API untuk konteks Padang & Sumbar.
+description: 5 skenario implementasi BMKG Gempa API untuk konteks Padang & Sumatera Barat, lengkap dengan code dan preview tampilan.
 ---
 
 import { Tabs, TabItem, Aside, LinkCard } from '@astrojs/starlight/components';
 
-Skenario real yang lo bisa build dengan BMKG Gempa API, fokus konteks Padang & Sumbar.
+Berikut adalah skenario implementasi nyata BMKG Gempa API dengan fokus pada
+kebutuhan Padang dan Sumatera Barat. Setiap use case dilengkapi dengan code
+example dan preview tampilan.
 
-## 1. Real-Time Alert System untuk Padang
+---
 
-**Problem:** Warga Padang butuh tau gempa cepat (karena Padang seismic-active &
-tsunami-prone). Notifikasi resmi kadang lambat / gak personal.
+## 1. Sistem Alert Real-Time untuk Padang
 
-**Solusi:** Telegram bot / web push yang notify gempa M≥4 di Sumbar.
+**Konteks:** Padang berada di wilayah seismik aktif dan tergolong rawan
+tsunami. Warga membutuhkan notifikasi cepat ketika terjadi gempa. Notifikasi
+resmi terkadang lambat atau tidak mencapai semua pengguna.
+
+**Solusi:** Bot Telegram atau push notification yang mengirim alert untuk
+gempa M≥4 di wilayah Sumbar.
+
+### Preview Notifikasi
+
+<div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; max-width: 360px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="display: flex; gap: 12px; align-items: flex-start;">
+    <div style="background: #fef3c7; color: #b45309; padding: 8px; border-radius: 8px; flex-shrink: 0; font-size: 20px; line-height: 1;">⚠️</div>
+    <div style="flex: 1;">
+      <div style="font-weight: 600; color: #111827; font-size: 15px;">Gempa M5.2 — Sumatera Barat</div>
+      <div style="color: #4b5563; font-size: 13px; margin-top: 4px;">21 km BaratLaut Kota Padang</div>
+      <div style="color: #6b7280; font-size: 12px; margin-top: 8px; display: flex; gap: 12px;">
+        <span>📍 -0.95, 100.36</span>
+        <span>📏 10 km</span>
+      </div>
+      <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">🕐 12 Mei 2026 · 10:15:32 WIB</div>
+      <div style="margin-top: 8px; padding: 6px 10px; background: #ecfdf5; color: #047857; font-size: 12px; font-weight: 500; border-radius: 6px; display: inline-block;">✓ Tidak berpotensi tsunami</div>
+    </div>
+  </div>
+</div>
+
+### Implementasi
 
 ```python
 import requests, time
-from datetime import datetime
 
 LAST_GEMPA = None
 
@@ -24,40 +49,80 @@ def is_sumbar(wilayah):
     keywords = ['SUMBAR', 'PADANG', 'BUKITTINGGI', 'PARIAMAN', 'MENTAWAI']
     return any(k in wilayah.upper() for k in keywords)
 
-def alert_via_telegram(gempa):
+def send_alert(gempa):
     msg = f"⚠️ Gempa M{gempa['Magnitude']} - {gempa['Wilayah']}"
     msg += f"\n📍 {gempa['Coordinates']}"
     msg += f"\n🕐 {gempa['Tanggal']} {gempa['Jam']}"
     msg += f"\n🌊 {gempa['Potensi']}"
-    # send to telegram API...
+    # Kirim melalui Telegram Bot API atau service lain
+    print(msg)
 
 while True:
     res = requests.get('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json')
     gempa = res.json()['Infogempa']['gempa']
 
-    # Filter: Sumbar + M≥4 + belum di-alert
     if (
         is_sumbar(gempa['Wilayah'])
         and float(gempa['Magnitude']) >= 4.0
         and gempa['DateTime'] != LAST_GEMPA
     ):
-        alert_via_telegram(gempa)
+        send_alert(gempa)
         LAST_GEMPA = gempa['DateTime']
 
-    time.sleep(30)  # Poll setiap 30 detik
+    time.sleep(30)
 ```
 
-**Tech stack saran:** Python + Telegram Bot API + cron / systemd service.
+**Tech stack yang direkomendasikan:** Python + Telegram Bot API, di-deploy
+melalui cron job atau systemd service.
 
 ---
 
 ## 2. Dashboard Historical Gempa Sumbar
 
-**Problem:** Riset / data journalism butuh visualisasi pola gempa Sumbar
-historis.
+**Konteks:** Riset, jurnalisme data, atau analisis kebijakan publik
+membutuhkan visualisasi pola gempa historis Sumatera Barat.
 
-**Solusi:** Dashboard pakai `gempaterkini.json` + cache lokal untuk akumulasi
-data.
+**Solusi:** Dashboard yang mengonsumsi `gempaterkini.json` dengan cache lokal
+untuk akumulasi data jangka panjang.
+
+### Preview Dashboard
+
+<div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin: 1rem 0; font-family: -apple-system, sans-serif;">
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px;">
+      <div style="color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Minggu Ini</div>
+      <div style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px;">12</div>
+      <div style="color: #6b7280; font-size: 12px;">gempa terekam</div>
+    </div>
+    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px;">
+      <div style="color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Magnitude Rata-Rata</div>
+      <div style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px;">M 3.8</div>
+      <div style="color: #6b7280; font-size: 12px;">range 2.1 – 5.2</div>
+    </div>
+    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px;">
+      <div style="color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Kedalaman Median</div>
+      <div style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px;">22 km</div>
+      <div style="color: #6b7280; font-size: 12px;">dangkal-menengah</div>
+    </div>
+  </div>
+  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px;">
+    <div style="color: #374151; font-size: 13px; font-weight: 600; margin-bottom: 10px;">Sebaran Gempa Mingguan</div>
+    <div style="display: flex; align-items: flex-end; gap: 6px; height: 80px;">
+      <div style="flex: 1; background: #93c5fd; height: 25%; border-radius: 4px 4px 0 0;"></div>
+      <div style="flex: 1; background: #60a5fa; height: 50%; border-radius: 4px 4px 0 0;"></div>
+      <div style="flex: 1; background: #93c5fd; height: 30%; border-radius: 4px 4px 0 0;"></div>
+      <div style="flex: 1; background: #3b82f6; height: 80%; border-radius: 4px 4px 0 0;"></div>
+      <div style="flex: 1; background: #60a5fa; height: 55%; border-radius: 4px 4px 0 0;"></div>
+      <div style="flex: 1; background: #93c5fd; height: 35%; border-radius: 4px 4px 0 0;"></div>
+      <div style="flex: 1; background: #bfdbfe; height: 20%; border-radius: 4px 4px 0 0;"></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-top: 6px; color: #9ca3af; font-size: 11px;">
+      <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+    </div>
+  </div>
+</div>
+
+### Implementasi
 
 ```ts
 // SvelteKit: src/routes/api/gempa-sumbar/+server.ts
@@ -80,19 +145,43 @@ export async function GET() {
 }
 ```
 
-**Visualisasi ide:**
-- Time-series chart (Chart.js): magnitude over time
-- Map heatmap (Leaflet): titik gempa + magnitude radius
-- Stats card: total gempa minggu ini, magnitude rata-rata, kedalaman rata-rata
+**Komponen visualisasi yang dapat ditambahkan:**
+- Time-series chart (Chart.js): magnitude per waktu
+- Map heatmap (Leaflet): titik gempa dengan radius magnitude
+- Statistics card: total gempa, magnitude rata-rata, kedalaman rata-rata
 
 ---
 
-## 3. PWA "Padang Real-Time Status"
+## 3. Komponen Real-Time untuk PWA
 
-**Problem:** Warga butuh single dashboard untuk monitor kondisi Padang
-real-time.
+**Konteks:** Aplikasi PWA "Padang Real-Time Status" membutuhkan komponen yang
+menampilkan informasi gempa terkini sebagai bagian dari dashboard kondisi
+real-time kota.
 
-**Solusi:** PWA aggregate BMKG gempa + cuaca + PetaBencana banjir.
+**Solusi:** Komponen Svelte reusable dengan polling otomatis.
+
+### Preview Komponen
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; max-width: 380px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <div style="display: flex; align-items: center; gap: 8px; color: #b45309;">
+      <span style="font-size: 18px;">⚠️</span>
+      <span style="font-weight: 600; font-size: 14px;">Gempa Terbaru Sumbar</span>
+    </div>
+    <span style="font-size: 11px; color: #9ca3af;">Live · 6s ago</span>
+  </div>
+  <div style="display: flex; align-items: baseline; gap: 8px;">
+    <span style="font-size: 36px; font-weight: 700; color: #111827; line-height: 1;">M 3.4</span>
+    <span style="font-size: 13px; color: #6b7280;">kedalaman 10 km</span>
+  </div>
+  <div style="color: #4b5563; font-size: 14px; margin-top: 8px;">21 km BaratLaut KOTAPADANG-SUMBAR</div>
+  <div style="color: #6b7280; font-size: 12px; margin-top: 6px;">12 Mei 2026 · 10:15 WIB</div>
+  <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6;">
+    <span style="padding: 4px 10px; background: #ecfdf5; color: #047857; font-size: 12px; font-weight: 500; border-radius: 6px;">✓ Tidak berpotensi tsunami</span>
+  </div>
+</div>
+
+### Implementasi
 
 ```svelte
 <!-- src/lib/components/GempaCard.svelte -->
@@ -131,12 +220,42 @@ real-time.
 
 ---
 
-## 4. Tsunami Risk Indicator untuk Pesisir Padang
+## 4. Indikator Risiko Tsunami untuk Pesisir Padang
 
-**Problem:** Padang punya risk tsunami tinggi (megathrust zone). Gempa besar
-laut Sumbar bisa trigger tsunami.
+**Konteks:** Padang menghadapi risiko tsunami yang signifikan karena
+posisinya di zona megathrust Sumatera. Gempa besar di laut sekitar Sumbar
+berpotensi memicu tsunami.
 
-**Solusi:** Filter gempa M≥6 + lokasi laut + tampilin warning level.
+**Solusi:** Indikator yang memperhitungkan magnitude, kedalaman, dan lokasi
+(laut vs darat) untuk memberikan level risiko sebagai informasi pelengkap
+warning resmi.
+
+### Preview Indikator
+
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 1rem 0; font-family: -apple-system, sans-serif;">
+  <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.05em;">Normal</div>
+    <div style="font-size: 20px; margin: 6px 0;">✓</div>
+    <div style="font-size: 11px; color: #15803d;">M&lt;5.5 atau darat</div>
+  </div>
+  <div style="background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 11px; font-weight: 600; color: #854d0e; text-transform: uppercase; letter-spacing: 0.05em;">Watch</div>
+    <div style="font-size: 20px; margin: 6px 0;">👁</div>
+    <div style="font-size: 11px; color: #a16207;">M≥5.5 di laut</div>
+  </div>
+  <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 11px; font-weight: 600; color: #9a3412; text-transform: uppercase; letter-spacing: 0.05em;">High</div>
+    <div style="font-size: 20px; margin: 6px 0;">⚠️</div>
+    <div style="font-size: 11px; color: #c2410c;">M≥6.5, dangkal</div>
+  </div>
+  <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 11px; font-weight: 600; color: #991b1b; text-transform: uppercase; letter-spacing: 0.05em;">Critical</div>
+    <div style="font-size: 20px; margin: 6px 0;">🚨</div>
+    <div style="font-size: 11px; color: #b91c1c;">Warning BMKG</div>
+  </div>
+</div>
+
+### Implementasi
 
 ```js
 function tsunamiRiskLevel(gempa) {
@@ -144,56 +263,86 @@ function tsunamiRiskLevel(gempa) {
 	const depth = parseInt(gempa.Kedalaman);
 	const wilayah = gempa.Wilayah.toLowerCase();
 
-	// Heuristik dasar (BUKAN official):
-	// - Gempa M≥6.5 + laut + dangkal = HIGH RISK
-	// - BMKG official warning via 'Potensi' field
+	// Prioritas tertinggi: warning resmi BMKG
+	if (gempa.Potensi.includes('berpotensi tsunami')) return 'CRITICAL';
+
 	const isOffShore = wilayah.includes('laut') || wilayah.includes('barat ');
 
-	if (gempa.Potensi.includes('berpotensi tsunami')) return 'CRITICAL';
 	if (mag >= 6.5 && depth <= 30 && isOffShore) return 'HIGH';
 	if (mag >= 5.5 && isOffShore) return 'WATCH';
 	return 'NORMAL';
 }
 ```
 
-<Aside type="danger" title="Disclaimer">
-	Tsunami warning RESMI cuma dari BMKG via InaTEWS. Indicator di atas adalah
-	**informasi pelengkap**, BUKAN pengganti official warning. Selalu prioritaskan
-	BMKG/BPBD announcement.
+<Aside type="danger" title="Disclaimer Penting">
+	Indikator di atas merupakan **informasi pelengkap berbasis heuristik**,
+	BUKAN pengganti peringatan resmi. Warning tsunami resmi hanya dikeluarkan
+	oleh BMKG melalui InaTEWS. Prioritaskan pengumuman BMKG/BPBD dalam situasi
+	darurat.
 </Aside>
 
 ---
 
 ## 5. Data Journalism — "Sumbar dalam Angka Gempa"
 
-**Problem:** Jurnalis butuh data konkret untuk feature story "Padang & Risk
-Gempa".
+**Konteks:** Jurnalis dan media membutuhkan data konkret untuk artikel
+feature mengenai risiko seismik Padang dan Sumatera Barat.
 
-**Solusi:** Aggregate data dari multiple sources untuk story angle.
+**Solusi:** Akumulasi data historis BMKG untuk visualisasi dan storytelling.
 
-**Story idea:**
-- "Berapa gempa Sumbar setahun terakhir?" (akumulasi `gempaterkini.json` daily)
-- "Kapan gempa terbesar yang dirasakan warga Padang?" (filter
-  `gempadirasakan.json` historical)
-- "Mengapa Mentawai sering gempa?" (data + geological context)
+### Preview Article Card
 
-**Tools:**
-- Python (pandas) untuk analisis
-- Looker Studio / Chart.js untuk visualisasi
-- Datawrapper untuk publish embed
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; max-width: 480px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="color: #2563eb; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Data Journalism · Mei 2026</div>
+  <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 8px 0; line-height: 1.3;">Sumatera Barat dalam Angka Gempa</h3>
+  <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0 0 14px 0;">
+    Analisis 12 bulan data BMKG mengungkap pola seismik di wilayah Sumatera
+    Barat: konsentrasi episentrum, kedalaman dominan, dan frekuensi tahunan.
+  </p>
+  <div style="display: flex; gap: 16px; padding-top: 14px; border-top: 1px solid #f3f4f6;">
+    <div>
+      <div style="font-size: 22px; font-weight: 700; color: #111827;">847</div>
+      <div style="font-size: 11px; color: #6b7280;">total gempa</div>
+    </div>
+    <div>
+      <div style="font-size: 22px; font-weight: 700; color: #111827;">M 6.8</div>
+      <div style="font-size: 11px; color: #6b7280;">magnitude max</div>
+    </div>
+    <div>
+      <div style="font-size: 22px; font-weight: 700; color: #111827;">71%</div>
+      <div style="font-size: 11px; color: #6b7280;">offshore</div>
+    </div>
+  </div>
+</div>
+
+### Sudut Cerita yang Dapat Dieksplorasi
+
+- **Frekuensi tahunan** — berapa gempa dirasakan warga Padang dalam setahun?
+- **Konsentrasi episentrum** — mengapa Mentawai dominan dalam catatan gempa?
+- **Korelasi dengan musim** — adakah pola temporal yang signifikan?
+- **Riwayat gempa besar** — kronologi gempa M≥6 di Sumbar 10 tahun terakhir
+
+### Tools yang Direkomendasikan
+
+| Tools | Kegunaan |
+|---|---|
+| Python (pandas) | Akumulasi dan analisis data |
+| Chart.js / Datawrapper | Visualisasi statis dan interaktif |
+| Leaflet / Mapbox | Visualisasi geospatial |
+| OpenPadang Catalog | Cross-reference dengan data BPS, OSM |
 
 ---
 
-## Use Case Lain yang Worth Eksplor
+## Use Case Lain yang Dapat Dieksplorasi
 
-- **SMS Gateway** untuk warga gak punya smartphone (pakai BMKG + Twilio)
-- **Sirene Otomatis** integrated dengan IoT (BPBD partnership)
-- **Insurance Risk Model** (multi-decade gempa data → premi adjustment)
-- **Tourism Safety App** untuk wisatawan Sumbar/Mentawai (gempa + tsunami warn)
-- **Edukasi Sekolah** — interactive learning gempa pakai data nyata
+- **SMS Gateway alert** untuk masyarakat tanpa smartphone (BMKG + Twilio)
+- **Sirine otomatis BPBD** terintegrasi melalui IoT
+- **Insurance risk model** dengan analisis multi-decade
+- **Tourism safety app** untuk wisatawan Sumbar/Mentawai
+- **Edukasi sekolah** — interactive learning dengan data nyata
 
 <LinkCard
-	title="Punya Use Case Lain?"
-	description="Open Issue di GitHub buat tambah ke catalog ini."
+	title="Memiliki Use Case Lain?"
+	description="Mohon laporkan melalui Issue di GitHub agar dapat ditambahkan ke katalog ini."
 	href="https://github.com/superemem/openpadang/issues/new"
 />

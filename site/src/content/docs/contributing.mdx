@@ -1,65 +1,68 @@
 ---
 title: Cara Berkontribusi
-description: Panduan kontribusi ke OpenPadang — tambah data source, curate dataset, fix bug, atau improve docs.
+description: Panduan kontribusi ke OpenPadang — menambah data source, melakukan kurasi dataset, perbaikan bug, atau meningkatkan dokumentasi.
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Makasih udah mau lihat-lihat OpenPadang! Kontribusi welcome dari siapa pun
-— gak perlu jadi expert, kontribusi kecil pun valuable.
+Terima kasih atas ketertarikan Anda terhadap OpenPadang. Kontribusi disambut
+dari berbagai level pengalaman — kontribusi kecil pun bernilai bagi
+keberlangsungan project.
 
 ## 📋 Scope Project
 
-OpenPadang fokus ke:
+OpenPadang berfokus pada:
 
-- **Data publik Padang & Sumbar** (terutama yang gak ada API resmi atau formatnya gak machine-readable)
+- **Data publik Padang & Sumbar** — terutama yang belum memiliki API resmi atau format machine-readable
 - **Standardisasi** ke format umum: CSV, JSON, GeoJSON, GTFS
 - **Open license:** data CC-BY 4.0, code MIT
-- **Komplementer** ke layanan resmi Pemkot (Padang Mobile, dll), bukan kompetitor
+- **Komplementer** terhadap layanan resmi pemerintah (Padang Mobile, Satu Data Indonesia)
 
-## 🤝 Cara Kontribusi
+## 🤝 Jenis Kontribusi
 
 <CardGrid>
 	<Card title="Tambah Data Source" icon="add-document">
-		Tahu sumber data publik Padang/Sumbar yang belum masuk catalog? Tambah
-		entry-nya. Effort: ~15 menit.
+		Mengetahui sumber data publik Padang/Sumbar yang belum tercantum?
+		Tambahkan entry ke catalog. Estimasi waktu: ~15 menit.
 	</Card>
 	<Card title="Curate Dataset" icon="document">
-		Bantu transform sumber jadi dataset terkurasi (CSV/JSON/GeoJSON/GTFS).
-		Effort: 1-3 weekend.
+		Bantu transform sumber menjadi dataset terkurasi (CSV/JSON/GeoJSON/GTFS).
+		Estimasi waktu: 1-3 weekend.
 	</Card>
 	<Card title="Bug Reports" icon="warning">
-		Open Issue dengan steps to reproduce. Atau fix sendiri via PR.
+		Buat Issue dengan langkah reproduksi yang jelas, atau perbaiki secara
+		langsung melalui Pull Request.
 	</Card>
-	<Card title="Documentation" icon="pencil">
-		Typo, clarification, contoh tambahan. Langsung PR, no Issue needed.
+	<Card title="Dokumentasi" icon="pencil">
+		Perbaikan typo, klarifikasi, atau penambahan contoh. Pull Request
+		langsung diterima tanpa perlu Issue terlebih dahulu.
 	</Card>
 </CardGrid>
 
-## 🛠️ Setup Development Local
+## 🛠️ Setup Development
 
 **Prerequisite:**
 
 - Node.js ≥20
-- pnpm ≥9 (wajib, bukan npm/yarn)
+- pnpm ≥9 (wajib, tidak menggunakan npm/yarn)
 
 ```bash
-# Clone repo
+# Clone repository
 git clone https://github.com/superemem/openpadang.git
 cd openpadang
 
 # Install dependencies
 pnpm install
 
-# Run docs site (Astro Starlight)
+# Jalankan documentation site (Astro Starlight)
 pnpm dev:site
 # → http://localhost:4321
 
-# Run app (SvelteKit)
+# Jalankan interactive app (SvelteKit)
 pnpm dev:app
 # → http://localhost:5173
 
-# Build all
+# Build semua project
 pnpm build
 ```
 
@@ -69,46 +72,46 @@ pnpm build
 
 - TypeScript strict mode
 - Prettier + ESLint (per project)
-- Naming convention:
+- **Naming convention:**
   - Folder: `kebab-case`
-  - Branch: `feat/`, `fix/`, `docs/`, `chore/` prefix
+  - Branch: prefix `feat/`, `fix/`, `docs/`, `chore/`
 
 ### Commit Messages
 
 Conventional Commits:
 
-- `feat:` — new feature
-- `fix:` — bug fix
-- `docs:` — documentation
+- `feat:` — fitur baru
+- `fix:` — perbaikan bug
+- `docs:` — perubahan dokumentasi
 - `chore:` — maintenance
-- `refactor:` — code refactor
+- `refactor:` — refactor tanpa perubahan behavior
 
 ### Dataset Standards
 
-- **Format:** prefer CSV (RFC 4180), JSON (with JSON Schema), GeoJSON, GTFS
-- **License:** must be compatible with CC-BY 4.0
-- **Schema:** document fields, types, units di dataset README
-- **PII:** wajib di-scan & di-scrub sebelum publish
+- **Format:** prioritas CSV (RFC 4180), JSON (dengan JSON Schema), GeoJSON, GTFS
+- **License:** harus kompatibel dengan CC-BY 4.0
+- **Schema:** dokumentasikan fields, types, dan units di README dataset
+- **PII:** wajib di-scan dan di-scrub sebelum publish
 
 ## 📜 License
 
-By contributing, you agree:
+Dengan berkontribusi, Anda menyetujui:
 
-- **Code contributions** licensed under **MIT** ([LICENSE](https://github.com/superemem/openpadang/blob/main/LICENSE))
-- **Data & documentation contributions** licensed under **CC-BY 4.0** ([LICENSE-DATA](https://github.com/superemem/openpadang/blob/main/LICENSE-DATA))
+- **Code contributions** dilisensikan di bawah **MIT** ([LICENSE](https://github.com/superemem/openpadang/blob/main/LICENSE))
+- **Data & documentation contributions** dilisensikan di bawah **CC-BY 4.0** ([LICENSE-DATA](https://github.com/superemem/openpadang/blob/main/LICENSE-DATA))
 
 ## 🙏 Code of Conduct
 
-- **Be kind.** Diskusi respectful walaupun gak setuju.
-- **Be patient.** Maintainer & contributor sebagian besar relawan.
-- **Be honest.** Kasih credit yang seharusnya.
-- **No spam, no harassment, no discrimination.**
+- **Be kind** — diskusi tetap respectful meski terjadi perbedaan pendapat
+- **Be patient** — maintainer dan kontributor adalah relawan dengan bandwidth terbatas
+- **Be honest** — atribusi yang sesuai dan transparan terhadap limitations
+- **Tidak diperkenankan:** spam, harassment, atau diskriminasi
 
 ## 📬 Kontak
 
 <LinkCard
-	title="Buka Issue di GitHub"
-	description="Diskusi feature, bug report, atau tanya-tanya."
+	title="Buat Issue di GitHub"
+	description="Untuk diskusi feature, bug report, atau pertanyaan."
 	href="https://github.com/superemem/openpadang/issues"
 />
 
@@ -120,11 +123,12 @@ By contributing, you agree:
 
 ---
 
-## 💡 Insight Buat Kontributor Baru
+## 💡 Tips untuk Kontributor Baru
 
-- Gak perlu lo expert — kontribusi kecil (typo fix, tambah 1 data source) tetep valuable
-- Diskusi di Issue dulu kalau scope besar, biar gak waste effort
-- Marathon, bukan sprint — kontribusi 1 dataset per bulan udah luar biasa
-- Project independent — kalau eventually lo mau fork & continue versi sendiri, silakan
+- **Tidak perlu menjadi expert** — kontribusi kecil (perbaikan typo, penambahan 1 data source) tetap bernilai
+- **Diskusikan via Issue terlebih dahulu** untuk scope besar, agar tidak terjadi tumpang tindih effort
+- **Marathon, bukan sprint** — kontribusi 1 dataset per bulan sudah merupakan kontribusi yang signifikan
+- **Project bersifat independent** — Anda dipersilakan fork dan melanjutkan versi sendiri apabila diperlukan
 
-Makasih udah peduli sama data publik Padang & Sumbar! 🌱
+Terima kasih atas kepedulian Anda terhadap aksesibilitas data publik di
+Padang dan Sumatera Barat.

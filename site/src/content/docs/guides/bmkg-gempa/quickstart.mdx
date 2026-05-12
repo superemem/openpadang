@@ -1,39 +1,41 @@
 ---
 title: BMKG Gempa Real-Time — Quick Start
-description: Akses data gempa real-time BMKG dalam 5 menit. No API key, gratis, JSON.
+description: Panduan singkat akses data gempa real-time dari API BMKG. Tanpa API key, gratis, response JSON.
 ---
 
 import { Aside, Steps, Tabs, TabItem, Badge, LinkCard } from '@astrojs/starlight/components';
 
-<Aside type="tip" title="5 menit setup">
-	No API key. No registrasi. Tinggal `fetch()` ke URL JSON. Cocok untuk yang
-	butuh **prototype cepat**.
+<Aside type="tip" title="Setup dalam 5 menit">
+	BMKG menyediakan endpoint publik tanpa autentikasi. Cukup HTTP GET ke URL
+	JSON dan Anda siap mengonsumsi data gempa real-time.
 </Aside>
 
-## Apa yang Akan Lo Dapet
+## Apa yang Akan Diperoleh
 
-3 endpoint JSON dari BMKG dengan data gempa Indonesia (termasuk Sumbar):
+API BMKG menyediakan 3 endpoint JSON untuk data gempa Indonesia (termasuk
+wilayah Sumatera Barat):
 
-- **Gempa terbaru** — gempa paling baru (latency ~6 detik)
-- **15 gempa terakhir** — riwayat singkat
-- **Gempa dirasakan warga** — gempa yang dirasakan masyarakat
+- **Gempa terbaru** — gempa paling baru dengan latency sekitar 6 detik
+- **15 gempa terakhir** — riwayat gempa untuk dashboard atau analisis
+- **Gempa dirasakan warga** — gempa yang dilaporkan dirasakan masyarakat
 
-Semua **public domain** (data pemerintah), bisa lo pakai untuk **app, dashboard,
-riset, atau alert system**.
+Seluruh data merupakan **public domain** (data pemerintah) dan dapat digunakan
+untuk berbagai keperluan: aplikasi, dashboard, sistem alert, riset akademik,
+maupun integrasi internal.
 
-## Step-by-Step
+## Langkah-Langkah
 
 <Steps>
 
-1. **Buka terminal atau browser**, paste URL ini:
+1. **Akses URL endpoint** menggunakan terminal atau browser:
 
    ```
    https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json
    ```
 
-   Lo bakal dapet response JSON. Itu udah jadi data gempa terbaru.
+   Response berupa data gempa terbaru dalam format JSON.
 
-2. **Parse dalam app lo.** Format response:
+2. **Parse response** dalam aplikasi Anda. Struktur response:
 
    ```json
    {
@@ -56,15 +58,16 @@ riset, atau alert system**.
    }
    ```
 
-3. **Filter Sumbar/Padang.** Cek `Wilayah` mengandung kata `SUMBAR`, `PADANG`,
-   atau `BUKITTINGGI`, atau parse koordinat (Sumbar ada di **lat -3.5 s/d 0.5,
-   lng 98 s/d 102**).
+3. **Filter berdasarkan wilayah** untuk fokus pada Sumbar/Padang. Gunakan
+   field `Wilayah` (cek keyword `SUMBAR`, `PADANG`, `BUKITTINGGI`, dst) atau
+   parse koordinat (Sumbar berada pada **lat -3.5 hingga 0.5, lng 98 hingga 102**).
 
-4. **Done!** Lo bisa display di app, send notification, atau analisa.
+4. **Implementasikan** sesuai kebutuhan: tampilkan di antarmuka, kirim
+   notifikasi, atau lakukan analisis lebih lanjut.
 
 </Steps>
 
-## Contoh Konkret
+## Contoh Implementasi
 
 <Tabs>
 <TabItem label="cURL">
@@ -74,7 +77,7 @@ curl -s https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json | jq .Infogempa.gemp
 ```
 
 </TabItem>
-<TabItem label="JavaScript (Browser/Node)">
+<TabItem label="JavaScript">
 
 ```js
 const res = await fetch('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json');
@@ -116,9 +119,10 @@ export async function GET() {
 </TabItem>
 </Tabs>
 
-## Filter Padang/Sumbar
+## Filter Wilayah Padang/Sumbar
 
-Karena BMKG endpoint cover seluruh Indonesia, lo perlu filter di sisi client:
+Endpoint BMKG menyediakan data untuk seluruh Indonesia. Untuk fokus pada
+wilayah Padang/Sumbar, lakukan filtering pada sisi client:
 
 ```js
 function isPadangSumbar(gempa) {
@@ -126,35 +130,36 @@ function isPadangSumbar(gempa) {
 	if (wilayah.includes('SUMBAR') || wilayah.includes('PADANG')) return true;
 	if (wilayah.includes('BUKITTINGGI') || wilayah.includes('PARIAMAN')) return true;
 
-	// Atau cek koordinat (bbox Sumbar approx)
+	// Alternatif: bounding box Sumatera Barat
 	const [lat, lng] = gempa.Coordinates.split(',').map(Number);
 	return lat >= -3.5 && lat <= 0.5 && lng >= 98 && lng <= 102;
 }
 ```
 
-## Selanjutnya
+## Langkah Selanjutnya
 
 <LinkCard
-	title="Lihat 3 endpoint lengkap"
-	description="Endpoint reference: autogempa, gempaterkini, gempadirasakan"
+	title="Reference Endpoint Lengkap"
+	description="Dokumentasi 3 endpoint BMKG: autogempa, gempaterkini, gempadirasakan"
 	href="/guides/bmkg-gempa/endpoints/"
 />
 
 <LinkCard
-	title="Use Cases Real Padang"
-	description="5 skenario nyata: alert system, historical analysis, dashboard, dll"
+	title="Use Cases & Contoh Implementasi"
+	description="5 skenario nyata: sistem alert, dashboard, indikator tsunami, dan lainnya."
 	href="/guides/bmkg-gempa/use-cases/"
 />
 
 <LinkCard
 	title="Gotchas & Limitations"
-	description="Timezone trap, false positives, rate limiting, field quirks"
+	description="Pitfalls umum: timezone, rate limit, field type, schema quirks."
 	href="/guides/bmkg-gempa/gotchas/"
 />
 
 ---
 
 <Aside type="note">
-	**Last verified:** Mei 2026. BMKG kadang ubah field naming. Kalau lo nemu
-	inconsistency, [report di Issue](https://github.com/superemem/openpadang/issues).
+	**Last verified:** Mei 2026. Skema response BMKG dapat berubah sewaktu-waktu.
+	Apabila Anda menemukan inkonsistensi, mohon laporkan melalui
+	[GitHub Issue](https://github.com/superemem/openpadang/issues).
 </Aside>

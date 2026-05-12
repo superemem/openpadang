@@ -1,65 +1,67 @@
 ---
 title: BMKG Gempa — Gotchas & Limitations
-description: Pitfalls, field quirks, rate limit, dan common errors yang sering ditemui pakai BMKG Gempa API.
+description: Pitfalls, quirks pada field, rate limit, dan common errors yang sering ditemui saat mengonsumsi BMKG Gempa API.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-BMKG API simple tapi punya quirks. List ini hasil observasi & komunitas — worth
-tau sebelum lo deploy ke production.
+API BMKG cukup sederhana, namun memiliki sejumlah quirks yang perlu
+diantisipasi. Daftar berikut adalah hasil observasi dari penggunaan di
+production maupun komunitas — penting untuk diketahui sebelum deployment.
 
-## ⚠️ Timezone Trap
+## ⚠️ Timezone — Hati-Hati dalam Parsing
 
-Field `DateTime` udah ISO 8601 UTC (`...+00:00`). Tapi `Tanggal` + `Jam`
-**display dalam WIB** (UTC+7). Jangan campur dua-duanya.
+Field `DateTime` sudah dalam format ISO 8601 UTC (`...+00:00`), namun
+`Tanggal` dan `Jam` ditampilkan dalam WIB (UTC+7). Hindari mencampur kedua
+representasi tersebut.
 
 ```js
-// ❌ SALAH: parse Jam pakai library timezone, lupa pisah dengan DateTime
+// ❌ SALAH: parse Jam tanpa konteks timezone yang jelas
 const time = new Date(`${gempa.Tanggal} ${gempa.Jam}`); // ambigu
 
-// ✅ BENAR: pakai DateTime yang udah ISO
+// ✅ BENAR: gunakan DateTime yang sudah berformat ISO
 const time = new Date(gempa.DateTime); // jelas UTC
-// Display ke user pakai toLocaleString dengan timezone 'Asia/Jakarta'
+// Tampilkan ke pengguna dengan timezone Asia/Jakarta
 const display = time.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
 ```
 
-## ⚠️ Field `Magnitude` itu STRING bukan Number
+## ⚠️ Field `Magnitude` Bertipe String
 
-Format response BMKG, semua field **string** (termasuk angka).
+Seluruh field response BMKG bertipe **string**, termasuk nilai numerik.
 
 ```js
-// ❌ SALAH: compare langsung
+// ❌ SALAH: perbandingan langsung
 if (gempa.Magnitude >= 5) // "5.4" >= 5 → coercion behaviour
 
-// ✅ BENAR: convert dulu
-if (parseFloat(gempa.Magnitude) >= 5) // explicit
+// ✅ BENAR: konversi terlebih dahulu
+if (parseFloat(gempa.Magnitude) >= 5) // eksplisit
 ```
 
-## ⚠️ Field `Coordinates` Format
+## ⚠️ Format Field `Coordinates`
 
-Format: `"lat,lng"` sebagai string (dipisah koma, no space). Tapi `Lintang` &
-`Bujur` punya format display (`"0.95 LS"` / `"0.95 LU"`).
+Format: `"lat,lng"` sebagai string (dipisah koma tanpa spasi). Sementara
+`Lintang` dan `Bujur` memiliki format display (`"0.95 LS"` atau `"0.95 LU"`).
 
 ```js
-// Cara aman parse coordinates
+// Parsing coordinates yang aman
 const [lat, lng] = gempa.Coordinates.split(',').map(parseFloat);
 
-// Atau dari Lintang/Bujur (lebih rumit)
+// Atau parsing dari Lintang/Bujur (memerlukan logika tambahan)
 function parseLintang(str) {
 	const [val, dir] = str.split(' ');
 	return parseFloat(val) * (dir === 'LS' ? -1 : 1);
 }
 ```
 
-## ⚠️ Field `Dirasakan` & `Shakemap` Tidak Selalu Ada
+## ⚠️ Field `Dirasakan` dan `Shakemap` Bersifat Opsional
 
-- `Dirasakan` cuma ada kalau **udah ada laporan warga** (biasanya 5-15 menit
-  setelah gempa)
-- `Shakemap` cuma ada kalau **gempa cukup besar** untuk di-generate shakemap
+- `Dirasakan` hanya tersedia apabila telah ada laporan dari warga
+  (umumnya 5-15 menit setelah kejadian)
+- `Shakemap` hanya tersedia untuk gempa yang cukup signifikan
 
 ```js
-// ❌ SALAH: assume ada
-const dirasakan = gempa.Dirasakan; // bisa undefined
+// ❌ SALAH: asumsi field selalu tersedia
+const dirasakan = gempa.Dirasakan; // dapat bernilai undefined
 
 // ✅ BENAR: optional handling
 const dirasakan = gempa.Dirasakan ?? 'Belum ada laporan';
@@ -68,14 +70,15 @@ const shakemapUrl = gempa.Shakemap
 	: null;
 ```
 
-## ⚠️ `Wilayah` Format Inkonsisten
+## ⚠️ Format `Wilayah` Tidak Konsisten
 
-Format `Wilayah` campur uppercase / mixed case / abbreviation:
-- `"21 km BaratLaut KOTAPADANG-SUMBAR"` (compound, no spaces)
+Format field `Wilayah` bervariasi dalam hal kapitalisasi dan format compound:
+
+- `"21 km BaratLaut KOTAPADANG-SUMBAR"` (compound, tanpa spasi)
 - `"95 km Tenggara MENTAWAI-SUMBAR"` (normal)
-- `"Laut Sumatera Barat"` (descriptive)
+- `"Laut Sumatera Barat"` (deskriptif)
 
-Untuk filter, **normalize dulu**:
+Untuk filtering, lakukan normalisasi terlebih dahulu:
 
 ```js
 function normalizeWilayah(s) {
@@ -90,11 +93,11 @@ const isPadang = (g) =>
 	normalizeWilayah(g.Wilayah).includes('PADANG');
 ```
 
-## ⚠️ `gempaterkini.json` Bisa Out-of-Order
+## ⚠️ `gempaterkini.json` Tidak Selalu Berurutan
 
-Walau biasanya sorted by time DESC, kadang ada gempa baru yang masuk **di
-tengah array** (data correction). Selalu **sort by `DateTime`** kalau urutan
-matter.
+Meskipun umumnya tersorted descending berdasarkan waktu, terkadang data
+correction dari BMKG menyebabkan entry baru muncul di tengah array. Apabila
+urutan penting, lakukan sorting eksplisit:
 
 ```js
 const sorted = data.Infogempa.gempa.sort(
@@ -104,12 +107,13 @@ const sorted = data.Infogempa.gempa.sort(
 
 ## ⚠️ Rate Limiting
 
-BMKG tidak publish rate limit resmi, tapi observasi:
-- **Polling < 1 detik** → berisiko 429 / IP block
-- **Polling 5-10 detik** → aman tapi waste resource
-- **Polling 30 detik** → rekomendasi untuk production
+BMKG tidak mempublikasikan rate limit resmi. Berdasarkan observasi:
 
-**Caching strategy:**
+- Polling kurang dari 1 detik berisiko menghasilkan HTTP 429 atau IP block
+- Polling 5-10 detik aman namun kurang efisien
+- **Rekomendasi production:** polling 30 detik dengan caching di server
+
+**Strategi caching:**
 
 ```js
 // Server-side cache (Vercel Edge / Cloudflare Workers)
@@ -123,19 +127,19 @@ export async function GET() {
 	const res = await fetch('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json');
 	const data = await res.json();
 
-	cache = { data, expires: Date.now() + 30_000 }; // 30s
+	cache = { data, expires: Date.now() + 30_000 }; // 30 detik
 	return json(data);
 }
 ```
 
-## ⚠️ "Potensi" Field Bahasa Indonesia
+## ⚠️ Field `Potensi` Bertekstual Bahasa Indonesia
 
-Field `Potensi` selalu Indonesian text:
-- `"Tidak berpotensi tsunami"` (paling sering)
-- `"Berpotensi tsunami"` ← CRITICAL
-- `"Berpotensi tsunami untuk wilayah XXX"` ← specific area
+Field `Potensi` selalu dalam Bahasa Indonesia:
+- `"Tidak berpotensi tsunami"` (mayoritas kasus)
+- `"Berpotensi tsunami"` — CRITICAL
+- `"Berpotensi tsunami untuk wilayah XXX"` — area spesifik
 
-Untuk programmatic check tsunami:
+Untuk pemeriksaan programmatik potensi tsunami:
 
 ```js
 const isTsunamiPotential = (g) =>
@@ -143,12 +147,13 @@ const isTsunamiPotential = (g) =>
 	!g.Potensi.toLowerCase().startsWith('tidak');
 ```
 
-## ⚠️ Outage / Maintenance
+## ⚠️ Outage dan Maintenance
 
-BMKG kadang maintenance (biasanya off-hours WIB). Endpoint bisa return:
+BMKG terkadang melakukan maintenance (umumnya di luar jam kerja WIB).
+Endpoint dapat merespons dengan:
 - HTTP 503 (service unavailable)
 - HTML error page (bukan JSON)
-- Empty response
+- Response kosong
 
 **Defensive coding:**
 
@@ -173,21 +178,22 @@ try {
 	return data.Infogempa.gempa;
 } catch (err) {
 	console.error('BMKG fetch failed:', err);
-	// Fallback: gunakan cache lama atau warning user
+	// Fallback: gunakan cache lama atau tampilkan warning ke pengguna
 	return null;
 }
 ```
 
-## ⚠️ Tidak Ada Webhook / Push Notification
+## ⚠️ Tidak Tersedia Webhook atau Push Notification
 
-BMKG **tidak provide webhook** atau push notif resmi. Lo harus **polling**.
+BMKG tidak menyediakan webhook atau push notification resmi. Mekanisme yang
+tersedia hanya polling.
 
-Untuk near-real-time:
-- Polling 30s (acceptable untuk most cases)
-- Polling 6s = mengikuti latency BMKG (waste resource)
-- Server-sent Events / WebSocket → BMKG tidak support
+Untuk near-real-time experience:
+- Polling 30 detik (acceptable untuk kebanyakan use case)
+- Polling 6 detik mengikuti latency BMKG, namun kurang efisien
+- Server-sent Events / WebSocket tidak tersedia
 
-Alternatif: pakai **Twitter API** ke akun `@infoBMKG` untuk push trigger.
+Alternatif: gunakan Twitter API untuk monitor akun `@infoBMKG` sebagai trigger.
 
 ---
 
@@ -195,22 +201,22 @@ Alternatif: pakai **Twitter API** ke akun `@infoBMKG` untuk push trigger.
 
 | Limitation | Workaround |
 |---|---|
-| Tidak ada API key / auth | Tidak ada (BMKG niat publik free) |
-| Tidak ada webhook | Polling 30s |
-| Schema bisa berubah tanpa notice | Defensive parsing, tracking di `last verified` date |
-| Coverage hanya Indonesia | OK untuk Padang use case |
-| Magnitude < 4 mungkin filtered | Cek `gempadirasakan.json` untuk yang kecil dirasakan |
-| Historical > 1 bulan susah | Pakai `repogempa.bmkg.go.id` (less stable) |
+| Tidak ada API key atau autentikasi | Tidak diperlukan (kebijakan publik BMKG) |
+| Tidak ada webhook | Implementasi polling 30 detik |
+| Skema dapat berubah tanpa notifikasi | Defensive parsing, monitoring tanggal verifikasi |
+| Coverage hanya Indonesia | Sesuai untuk use case Padang |
+| Magnitude rendah mungkin tidak dipublikasikan | Gunakan `gempadirasakan.json` untuk gempa kecil |
+| Data historis > 1 bulan terbatas | Gunakan `repogempa.bmkg.go.id` (kurang stabil) |
 
-## Reporting Issue ke BMKG
+## Melaporkan Issue ke BMKG
 
-Kalau lo nemu bug data BMKG (bukan API):
+Untuk pelaporan bug atau masalah data BMKG (bukan API):
 - Email: data@bmkg.go.id
 - Twitter: [@infoBMKG](https://twitter.com/infoBMKG)
 - Hotline: 196
 
 <Aside type="note">
-	**Last verified:** Mei 2026. Quirks bisa berubah seiring update BMKG. Kalau
-	lo nemu inconsistency baru, [report di GitHub
-	Issue](https://github.com/superemem/openpadang/issues).
+	**Last verified:** Mei 2026. Quirks dan limitations dapat berubah seiring
+	update BMKG. Apabila Anda menemukan inkonsistensi baru, mohon laporkan
+	melalui [GitHub Issue](https://github.com/superemem/openpadang/issues).
 </Aside>

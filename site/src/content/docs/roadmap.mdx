@@ -1,109 +1,111 @@
 ---
 title: Roadmap
-description: Phased roadmap OpenPadang dari Foundation Setup sampai Community building.
+description: Rencana pengembangan OpenPadang dari Foundation Setup hingga Community Building.
 ---
 
-OpenPadang dibangun **marathon, bukan sprint**. Roadmap di bawah adalah panduan,
-bukan deadline ketat. Capek istirahat. Skip phase yang gak mood.
+OpenPadang dikembangkan dengan pendekatan **bertahap dan berkelanjutan**.
+Roadmap berikut merupakan panduan, bukan target dengan deadline mengikat.
 
 ## 🎯 Phase 0: Foundation Setup — IN PROGRESS
 
-**Goal:** Project online dengan landing page minimal. Bisa pause kapan aja
-setelah ini tanpa rusak.
+**Tujuan:** Project online dengan landing page minimal dan struktur dasar
+yang dapat dilanjutkan kapan pun.
 
-- ✅ Folder structure + project docs
-- ✅ Git + GitHub repo public
+- ✅ Folder structure dan project documentation
+- ✅ Git dan public GitHub repository
 - ✅ pnpm monorepo (site/, app/, packages/shared/)
-- ✅ Astro Starlight site (this docs)
-- ✅ SvelteKit app skeleton
+- ✅ Astro Starlight documentation site
+- ✅ SvelteKit application skeleton
 - ✅ Design tokens, Tailwind 4, Lucide, Inter
 - ✅ LICENSE (MIT + CC-BY 4.0) + CONTRIBUTING.md
 - 🔲 Vercel deployment
 
 ## 📊 Phase 1: Catalog & Documentation
 
-**Goal:** Static documentation site dengan catalog 20+ data sources
-terdokumentasi rapi.
+**Tujuan:** Documentation site dengan katalog 20+ sumber data publik
+terdokumentasi.
 
-- Lengkapi Data Catalog dengan minimal 20 sumber publik
-- Per source: URL, format, license, refresh rate, contact, reliability
-- Page detail per source
-- A11y + Lighthouse mobile audit
+- Pelengkapan Data Catalog dengan minimal 20 sumber publik
+- Per source: URL, format, license, refresh rate, contact, reliability rating
+- Detail page per source
+- Accessibility audit dan Lighthouse mobile audit
 - Soft announcement publik
 
 ## 🌍 Phase 2: First Curated Dataset
 
-**Goal:** 1 dataset production-ready, accessible via GitHub raw + dokumentasi
-lengkap.
+**Tujuan:** Satu dataset production-ready, dapat diakses melalui GitHub raw
+URL atau API, dengan dokumentasi lengkap.
 
 **Kandidat starter (lowest hanging fruit):**
 
-- OSM POI Padang (1 query Overpass API → JSON)
+- OSM POI Padang (satu query Overpass API → JSON)
 - BMKG real-time wrapper
 - BPS Padang demographic time-series
 
 ## ⚡ Phase 3: Showcase — Padang Real-Time Status PWA
 
-**Goal:** Live PWA yang konsumsi data publik (BMKG, PetaBencana, OWM) — bukti
-konkret value Open Data.
+**Tujuan:** PWA yang mengonsumsi data publik (BMKG, PetaBencana, OWM) sebagai
+demonstrasi konkret manfaat Open Data.
 
-Fitur planned:
+Fitur yang direncanakan:
 
-- Gempa real-time + tsunami warning
-- Cuaca + AQI per area
+- Gempa real-time dan tsunami warning
+- Cuaca dan AQI per area
 - Banjir crowd-source dari PetaBencana
 - Map view dengan Leaflet
-- PWA installable + offline-cache
-- Web Push notification untuk gempa M≥5 Sumbar
+- PWA installable dengan offline-cache
+- Web Push notification untuk gempa M≥5 di Sumbar
 
 ## 🔌 Phase 4: API Gateway
 
-**Goal:** REST API publik dengan dokumentasi OpenAPI 3.0.
+**Tujuan:** REST API publik dengan dokumentasi OpenAPI 3.0.
 
 - SvelteKit `+server.ts` endpoints
 - Interactive API docs (Swagger UI / Scalar)
-- Rate limiting + caching
-- Code examples (cURL, JS, Python)
+- Rate limiting dan caching
+- Code examples (cURL, JavaScript, Python)
 
 ## 📈 Phase 5: Visualization & Data Stories
 
-**Goal:** Dashboard publik + data journalism.
+**Tujuan:** Dashboard publik dan data journalism.
 
 **Ide story:**
 
-- "Demografi Padang Visualized" (BPS data)
-- "Mengapa Lubuk Buaya Banjir?" (geo + historical)
-- "Trans Padang Koridor Mana Paling Sepi?" (kalau dapet data)
+- "Demografi Padang dalam Visualisasi" (BPS data)
+- "Mengapa Lubuk Buaya Rentan Banjir?" (geo + historical)
+- "Trans Padang: Koridor dengan Frekuensi Terendah" (apabila data tersedia)
 
 ## 🌐 Phase 6: Outreach & Community
 
-**Goal:** Project gak solo lagi. Ada kontributor, partnership, recognition.
+**Tujuan:** Project tidak lagi solo — terbentuknya kontributor, partnership,
+dan recognition.
 
-- Surat resmi ke Diskominfo Padang
-- Approach UNAND/UNP — kolaborasi research
+- Surat resmi kepada Diskominfo Padang
+- Approach UNAND/UNP untuk kolaborasi penelitian
 - Submit ke DataPortals.org
-- Article LinkedIn/Twitter
-- Hackathon partnership
+- Article di LinkedIn dan Twitter
+- Partnership hackathon
 
 ---
 
-## Total Timeline (Estimate)
+## Estimasi Timeline
 
 | Phase | Effort | Cumulative |
 |---|---|---|
-| Phase 0 | 12-16 jam | Week 1-2 |
-| Phase 1 | 16-20 jam | Week 3-5 |
-| Phase 2 | 20-30 jam | Week 6-9 |
-| Phase 3 | 20-30 jam | Week 10-13 |
-| Phase 4 | 10-16 jam | Week 14-15 |
-| Phase 5+ | Ongoing | Month 4+ |
-| Phase 6+ | Ongoing | Month 6+ |
+| Phase 0 | 12-16 jam | Minggu 1-2 |
+| Phase 1 | 16-20 jam | Minggu 3-5 |
+| Phase 2 | 20-30 jam | Minggu 6-9 |
+| Phase 3 | 20-30 jam | Minggu 10-13 |
+| Phase 4 | 10-16 jam | Minggu 14-15 |
+| Phase 5+ | Ongoing | Bulan 4+ |
+| Phase 6+ | Ongoing | Bulan 6+ |
 
-**Foundation (Phase 0-4):** ~3-4 bulan @ 4-6 jam/minggu (sustainable solo).
+**Foundation (Phase 0-4):** kira-kira 3-4 bulan dengan ritme 4-6 jam per
+minggu (sustainable untuk pengembangan solo).
 
-Phase 5+ ongoing — kapan mood. No deadline.
+Phase 5+ bersifat ongoing — tanpa deadline yang mengikat.
 
 ---
 
-*Detail step-by-step roadmap untuk maintainer ada di repo:
+*Detail step-by-step roadmap untuk maintainer tersedia di repository:
 [`docs/05-roadmap-detail.md`](https://github.com/superemem/openpadang/blob/main/docs/05-roadmap-detail.md).*
