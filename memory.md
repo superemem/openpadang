@@ -49,7 +49,8 @@
 - **Package manager:** pnpm (wajib, bukan npm/yarn)
 - **Phase 0 hosting:** Vercel default URL (`openpadang.vercel.app`) — domain custom nyusul
 - **GitHub repo:** `superemem/openpadang` (personal account, public)
-- **Repo structure:** pnpm Monorepo (A1) — `docs/` (Astro Starlight), `app/` (SvelteKit), `packages/shared/` (design tokens, types)
+- **Repo structure:** pnpm Monorepo (A1) — `site/` (Astro Starlight), `app/` (SvelteKit), `packages/shared/` (design tokens, types)
+- **Scope: HYBRID** (2026-05-12) — listing all + curate selective. Untuk Tier "Direct API" (BMKG, OSM, PetaBencana, dll), OpenPadang = **documentation & education layer** (Quick Start, Code Examples, Use Cases, Gotchas) — TIDAK re-host. Untuk yang belum ada API atau format jelek, OpenPadang scrape & host.
 
 ### Decision yang masih pending
 - 🔲 First dataset to curate — pilih dari shortlist di `docs/04-data-catalog.md` (recommend: OSM POI Padang)

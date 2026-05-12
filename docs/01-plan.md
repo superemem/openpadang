@@ -26,6 +26,30 @@ Project ini muncul dari **civic frustration**, bukan portfolio chase atau moneti
 - **vs Satu Data Indonesia (national):** Satu Data fokus statistik nasional. OpenPadang fokus Padang/Sumbar dengan kedalaman lokal.
 - **vs PetaBencana.id (civic tech):** PetaBencana spesifik bencana. OpenPadang multi-domain (transport, demografi, geo, dll).
 
+## Scope: Hybrid Approach
+
+OpenPadang **listing semua** sumber data publik Padang/Sumbar di catalog, tapi **curation/hosting selective**:
+
+### Listing Tier
+
+| Tier | Cara Akses | Yang OpenPadang Lakukan |
+|---|---|---|
+| 🟢 **Direct API** (BMKG, OSM, PetaBencana, OWM) | User akses ke source asli | Buatkan **Quick Start + Code Examples + Use Cases + Gotchas** docs. Tidak re-host. |
+| 🟡 **Curated by OpenPadang** | User akses via `api.openpadang.info` atau download dari repo | Scrape, transform, standardize, host. Untuk source yang belum ada API atau format jelek. |
+| 🔴 **To Be Curated** | Planned | Roadmap untuk Phase berikutnya |
+| 💎 **Partner Required** | Butuh akses resmi | Trans Padang GPS, Shelter ZMS — perlu permohonan ke Dishub/BPBD |
+| ⚡ **Aggregation Endpoints** | `api.openpadang.info/realtime/...` | Combine multiple sources jadi 1 response. Padang-specific filtering. |
+
+### Differentiator Utama
+
+Untuk source yang punya API resmi tapi **dokumentasinya jelek**, OpenPadang berfungsi sebagai **documentation & education layer**:
+- Quick Start (5 menit copy-paste-able)
+- Code Examples (cURL, JS, Python)
+- Real Use Cases (3-5 skenario Padang/Sumbar)
+- Gotchas & Limitations
+- Padang/Sumbar specific tips (cara filter ke daerah lokal)
+- Last Verified date
+
 ## Mode Kerja
 
 - **Marathon, bukan sprint.** Capek istirahat, gak mood skip.

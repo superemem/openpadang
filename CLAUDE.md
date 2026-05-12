@@ -23,6 +23,19 @@ Identity dasar (panggil Emen "bro", lo/gue, framework Emen, bahasa Indonesia cas
 4. **Pragmatic** — minimal viable dulu, baru iterate. Hindari over-engineering
 5. **Civic, bukan startup** — bukan kompetitor Padang Mobile. Komplementer
 
+### Scope: Hybrid Approach (Locked 2026-05-12)
+- **Catalog listing:** semua sumber data publik Padang/Sumbar (comprehensive)
+- **Curation/hosting:** SELECTIVE — cuma yang:
+  - Belum ada API resmi (priority tinggi — BPS, GTFS Trans Padang)
+  - API ada tapi format jelek (transform jadi standar)
+  - Butuh Padang/Sumbar specific filtering
+- **Untuk source yang punya API resmi & format bagus** (BMKG, OSM, PetaBencana):
+  - JANGAN re-host
+  - Buatkan **Quick Start Guide** + **Code Examples** + **Use Cases** + **Gotchas** di docs
+  - User akses langsung ke source asli via link
+  - OpenPadang = documentation & education layer on top
+- **Aggregation value-add:** `/api/realtime` endpoints yang combine multiple sources jadi 1 response (e.g., gempa + cuaca + banjir untuk Padang)
+
 ### Aturan Eksekusi
 - **Sebelum bikin dataset baru:** cek `docs/04-data-catalog.md` untuk lihat priority list
 - **Setiap dataset wajib punya:** schema doc, license info, contributor credit, last updated, source attribution
