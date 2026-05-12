@@ -39,9 +39,12 @@
 - ✅ Custom favicon SVG (site + app) + OG image SVG
 - ✅ shadcn-svelte config manual (components.json + lib/utils.ts)
 - ✅ Landing app improved: CTA buttons, footer, OG meta tags
-- ✅ **BMKG Gempa Guide** (Phase 1 starter) — 4 page: quickstart, endpoints, use-cases, gotchas (commit `8e70e0b`)
+- ✅ **BMKG Gempa Guide** — 4 page: quickstart, endpoints, use-cases, gotchas (commit `8e70e0b`)
+- ✅ Tone formal rewrite + UI mockup di use-cases BMKG Gempa (commit `d5088b5`)
+- ✅ **BMKG Cuaca Guide** — 4 page dengan UI mockup (commit `36b016e`)
+- ✅ **OSM Overpass Guide** — 4 page dengan UI mockup (commit `1d8fe0c`)
 - 🔲 Domain registrasi (postponed)
-- 🔲 Guide untuk source Direct API lain (OSM, PetaBencana, BMKG Cuaca, OWM, InaTEWS)
+- 🔲 Guide untuk source Direct API sisa: PetaBencana, OpenWeatherMap, InaTEWS
 - 🔲 First curated dataset (Phase 2): kandidat OSM POI Padang atau BPS Padang demographic
 
 ### Decision yang sudah dibuat
