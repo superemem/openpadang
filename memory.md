@@ -44,6 +44,7 @@
 - ✅ **BMKG Cuaca Guide** — 4 page dengan UI mockup (commit `36b016e`)
 - ✅ **OSM Overpass Guide** — 4 page dengan UI mockup (commit `1d8fe0c`)
 - ✅ **Live API validation** — semua endpoint di-test, banyak fix di BMKG Cuaca (mapping kecamatan salah, adm1-3 gak work, missing fields) (commit `fc26bee`)
+- ✅ **BMKG Cuaca v2 endpoint discovered** — setelah deep research, ternyata `cuaca.bmkg.go.id/api/df/v1/forecast/adm` support adm1-4 semua. Legacy `api.bmkg.go.id/publik/prakiraan-cuaca` hanya adm4. (commit `304acd6`)
 - 🔲 Domain registrasi (postponed)
 - 🔲 Guide untuk source Direct API sisa: PetaBencana, OpenWeatherMap, InaTEWS
 - 🔲 First curated dataset (Phase 2): kandidat OSM POI Padang atau BPS Padang demographic
@@ -59,8 +60,9 @@ Workflow untuk guide berikutnya:
 1. Hit endpoint live dengan curl/python dulu
 2. Verify response schema match documentation source
 3. Test edge cases (empty result, error response, parameter variants)
-4. Tulis guide berdasarkan observasi aktual, bukan dokumentasi source
-5. Tambah disclaimer "Last verified: <date>" + link ke validation test
+4. **Cari endpoint alternatif** — banyak service punya multiple endpoint dengan kemampuan berbeda (e.g., BMKG punya legacy `api.bmkg.go.id` vs v2 `cuaca.bmkg.go.id`)
+5. Tulis guide berdasarkan observasi aktual, bukan dokumentasi source
+6. Tambah disclaimer "Last verified: <date>" + link ke validation test
 
 ### Decision yang sudah dibuat
 - **Brand:** OpenPadang (locked)
