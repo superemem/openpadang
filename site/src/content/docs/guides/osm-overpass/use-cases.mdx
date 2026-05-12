@@ -1,0 +1,493 @@
+---
+title: OSM Overpass — Use Cases Padang
+description: 5 skenario implementasi OSM Overpass API untuk konteks Padang, lengkap dengan code dan preview tampilan.
+---
+
+import { Tabs, TabItem, Aside, LinkCard } from '@astrojs/starlight/components';
+
+Berikut adalah skenario implementasi nyata OSM Overpass API dengan fokus pada
+kebutuhan Padang. Setiap use case dilengkapi dengan code example dan preview
+tampilan.
+
+---
+
+## 1. POI Directory — "Cari Tempat di Padang"
+
+**Konteks:** Aplikasi atau website yang menampilkan direktori tempat
+(restoran, kafe, masjid, ATM, dll) di Padang dengan filter kategori.
+
+**Solusi:** Query Overpass berdasarkan tag amenity/shop/tourism, render hasil
+sebagai grid card.
+
+### Preview Directory
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; max-width: 520px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+    <button style="padding: 6px 12px; background: #2563eb; color: white; border-radius: 6px; border: none; font-size: 12px; font-weight: 600;">Kafe (47)</button>
+    <button style="padding: 6px 12px; background: white; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; font-weight: 500;">Restoran (128)</button>
+    <button style="padding: 6px 12px; background: white; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; font-weight: 500;">ATM (89)</button>
+    <button style="padding: 6px 12px; background: white; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; font-weight: 500;">SPBU (34)</button>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <div style="width: 32px; height: 32px; background: #fef3c7; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px;">☕</div>
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Bagindo Coffee</div>
+      </div>
+      <div style="font-size: 11px; color: #6b7280;">Jl. Hayam Wuruk, Padang Barat</div>
+      <div style="margin-top: 6px; display: flex; gap: 8px; font-size: 11px; color: #6b7280;">
+        <span>📍 -0.95, 100.36</span>
+      </div>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <div style="width: 32px; height: 32px; background: #fef3c7; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px;">☕</div>
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Janji Jiwa #324</div>
+      </div>
+      <div style="font-size: 11px; color: #6b7280;">Jl. Veteran, Padang Utara</div>
+      <div style="margin-top: 6px; display: flex; gap: 8px; font-size: 11px; color: #6b7280;">
+        <span>📍 -0.94, 100.36</span>
+      </div>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <div style="width: 32px; height: 32px; background: #fef3c7; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px;">☕</div>
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Kupi Kupi</div>
+      </div>
+      <div style="font-size: 11px; color: #6b7280;">Jl. Imam Bonjol, Padang Tengah</div>
+      <div style="margin-top: 6px; display: flex; gap: 8px; font-size: 11px; color: #6b7280;">
+        <span>📍 -0.95, 100.37</span>
+      </div>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <div style="width: 32px; height: 32px; background: #fef3c7; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px;">☕</div>
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Black Sand</div>
+      </div>
+      <div style="font-size: 11px; color: #6b7280;">Jl. Sudirman, Padang Barat</div>
+      <div style="margin-top: 6px; display: flex; gap: 8px; font-size: 11px; color: #6b7280;">
+        <span>📍 -0.94, 100.36</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+### Implementasi
+
+```ts
+// src/routes/api/poi/[category]/+server.ts
+import { json } from '@sveltejs/kit';
+
+export async function GET({ params }) {
+	const { category } = params; // 'cafe', 'restaurant', dll
+
+	const query = `
+		[out:json][timeout:25];
+		area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+		(
+			node["amenity"="${category}"](area.padang);
+			way["amenity"="${category}"](area.padang);
+		);
+		out center;
+	`;
+
+	const res = await fetch('https://overpass-api.de/api/interpreter', {
+		method: 'POST',
+		body: `data=${encodeURIComponent(query)}`,
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	});
+
+	const { elements } = await res.json();
+
+	const pois = elements
+		.filter((e) => e.tags?.name)
+		.map((e) => ({
+			id: e.id,
+			name: e.tags.name,
+			lat: e.lat ?? e.center?.lat,
+			lng: e.lon ?? e.center?.lon,
+			address: e.tags['addr:street'] ?? null,
+		}));
+
+	return json(pois);
+}
+```
+
+---
+
+## 2. Map Visualization — Halte Trans Padang
+
+**Konteks:** Visualisasi semua halte bus dan jalur transportasi publik di
+Padang sebagai bagian dari aplikasi navigasi atau transit explorer.
+
+**Solusi:** Query semua node dengan tag `highway=bus_stop`, render di peta
+Leaflet dengan custom marker.
+
+### Preview Map
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; max-width: 520px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="font-weight: 600; color: #111827; font-size: 14px; margin-bottom: 12px;">Halte Bus Padang · 71 lokasi</div>
+  <div style="background: #f0f9ff; border-radius: 8px; padding: 12px; position: relative; min-height: 200px; background-image: radial-gradient(circle at 30% 30%, rgba(96,165,250,0.1), transparent 50%), radial-gradient(circle at 70% 70%, rgba(34,197,94,0.08), transparent 50%);">
+    <div style="position: relative; height: 180px;">
+      {/* Map mockup with markers */}
+      <div style="position: absolute; left: 20%; top: 25%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Halte Imam Bonjol"></div>
+      <div style="position: absolute; left: 35%; top: 35%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 25%; top: 50%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 45%; top: 30%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 55%; top: 45%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 65%; top: 60%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 75%; top: 35%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 40%; top: 65%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 60%; top: 25%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 30%; top: 70%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      <div style="position: absolute; left: 80%; top: 50%; width: 12px; height: 12px; background: #2563eb; border: 2px solid white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+      {/* Popup */}
+      <div style="position: absolute; left: 28%; top: 12%; background: white; padding: 6px 10px; border-radius: 6px; font-size: 11px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 1px solid #e5e7eb;">
+        <div style="font-weight: 600; color: #111827;">Halte Imam Bonjol</div>
+        <div style="color: #6b7280; font-size: 10px;">Koridor 1 · Trans Padang</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 8px; font-size: 11px; color: #6b7280; text-align: right;">© OpenStreetMap contributors</div>
+</div>
+
+### Implementasi
+
+```svelte
+<!-- src/lib/components/HalteMap.svelte -->
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import L from 'leaflet';
+
+	let mapEl: HTMLDivElement;
+
+	onMount(async () => {
+		const res = await fetch('/api/halte-padang');
+		const halte = await res.json();
+
+		const map = L.map(mapEl).setView([-0.95, 100.36], 13);
+
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '© OpenStreetMap contributors',
+		}).addTo(map);
+
+		halte.forEach((h: any) => {
+			L.circleMarker([h.lat, h.lng], {
+				radius: 6,
+				color: 'white',
+				fillColor: '#2563eb',
+				fillOpacity: 1,
+			})
+				.addTo(map)
+				.bindPopup(`<b>${h.name}</b><br>${h.koridor ?? ''}`);
+		});
+	});
+</script>
+
+<div bind:this={mapEl} class="h-96 rounded-xl" />
+```
+
+```ts
+// src/routes/api/halte-padang/+server.ts
+const query = `
+	[out:json][timeout:25];
+	area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+	node["highway"="bus_stop"](area.padang);
+	out body;
+`;
+```
+
+---
+
+## 3. Food Finder — Restoran dengan Kategori Cuisine
+
+**Konteks:** Aplikasi food discovery yang menampilkan restoran Padang dengan
+filter berdasarkan jenis cuisine (Indonesian, Western, Chinese, dll).
+
+**Solusi:** Query dengan multiple tag filter dan group hasil berdasarkan
+cuisine.
+
+### Preview Food Finder
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; max-width: 480px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+    <div style="font-size: 20px;">🍽️</div>
+    <div style="font-weight: 600; color: #111827; font-size: 14px;">Restoran di Padang</div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f9fafb; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="font-size: 18px;">🇮🇩</div>
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Indonesian / Padang</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="font-size: 12px; font-weight: 600; color: #111827;">82</div>
+        <div style="color: #9ca3af; font-size: 11px;">→</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f9fafb; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="font-size: 18px;">🥡</div>
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Chinese</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="font-size: 12px; font-weight: 600; color: #111827;">14</div>
+        <div style="color: #9ca3af; font-size: 11px;">→</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f9fafb; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="font-size: 18px;">🍔</div>
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Western / Fast Food</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="font-size: 12px; font-weight: 600; color: #111827;">23</div>
+        <div style="color: #9ca3af; font-size: 11px;">→</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f9fafb; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="font-size: 18px;">🍜</div>
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Japanese / Korean</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="font-size: 12px; font-weight: 600; color: #111827;">9</div>
+        <div style="color: #9ca3af; font-size: 11px;">→</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+### Implementasi
+
+```js
+const query = `
+	[out:json][timeout:25];
+	area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+	(
+		node["amenity"="restaurant"](area.padang);
+		way["amenity"="restaurant"](area.padang);
+	);
+	out center;
+`;
+
+async function getFoodByCategory() {
+	const data = await overpassQuery(query);
+
+	const grouped = {};
+	for (const r of data.elements) {
+		const cuisine = r.tags?.cuisine ?? 'unknown';
+		const normalized = normalizeCuisine(cuisine);
+		(grouped[normalized] ??= []).push({
+			name: r.tags.name ?? 'Tanpa Nama',
+			lat: r.lat ?? r.center?.lat,
+			lng: r.lon ?? r.center?.lon,
+			tags: r.tags,
+		});
+	}
+
+	return grouped;
+}
+
+function normalizeCuisine(c) {
+	const lower = c.toLowerCase();
+	if (lower.includes('indonesian') || lower.includes('padang')) return 'Indonesian';
+	if (lower.includes('chinese')) return 'Chinese';
+	if (lower.includes('japanese') || lower.includes('korean')) return 'Japanese/Korean';
+	if (lower.includes('burger') || lower.includes('pizza')) return 'Western/Fast Food';
+	return 'Lainnya';
+}
+```
+
+---
+
+## 4. Emergency Service Locator
+
+**Konteks:** Aplikasi disaster preparedness yang menampilkan lokasi fasilitas
+darurat terdekat (rumah sakit, polisi, damkar) dari posisi pengguna.
+
+**Solusi:** Query multiple amenity dalam radius tertentu dari koordinat
+pengguna, urutkan berdasarkan jarak.
+
+### Preview Locator
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; max-width: 460px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="font-size: 18px;">🚨</div>
+      <div style="font-weight: 600; color: #111827; font-size: 14px;">Fasilitas Darurat Terdekat</div>
+    </div>
+    <div style="font-size: 11px; color: #6b7280;">📍 Padang Barat</div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #fef2f2; border-radius: 8px; border-left: 3px solid #dc2626;">
+      <div style="font-size: 24px;">🏥</div>
+      <div style="flex: 1;">
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">RSUP Dr. M. Djamil</div>
+        <div style="font-size: 11px; color: #6b7280;">Rumah Sakit Pusat · 24 jam</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight: 700; font-size: 13px; color: #dc2626;">1.2 km</div>
+        <div style="font-size: 10px; color: #6b7280;">3 menit</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #eff6ff; border-radius: 8px; border-left: 3px solid #2563eb;">
+      <div style="font-size: 24px;">🚓</div>
+      <div style="flex: 1;">
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Polsek Padang Barat</div>
+        <div style="font-size: 11px; color: #6b7280;">Polisi · 24 jam</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight: 700; font-size: 13px; color: #2563eb;">0.8 km</div>
+        <div style="font-size: 10px; color: #6b7280;">2 menit</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff7ed; border-radius: 8px; border-left: 3px solid #ea580c;">
+      <div style="font-size: 24px;">🚒</div>
+      <div style="flex: 1;">
+        <div style="font-weight: 600; font-size: 13px; color: #111827;">Damkar Padang</div>
+        <div style="font-size: 11px; color: #6b7280;">Pemadam Kebakaran</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight: 700; font-size: 13px; color: #ea580c;">2.1 km</div>
+        <div style="font-size: 10px; color: #6b7280;">5 menit</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+### Implementasi
+
+```js
+async function findNearbyEmergency(lat, lng, radiusMeters = 5000) {
+	const query = `
+		[out:json][timeout:25];
+		(
+			node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+			node["amenity"="police"](around:${radiusMeters},${lat},${lng});
+			node["amenity"="fire_station"](around:${radiusMeters},${lat},${lng});
+		);
+		out body;
+	`;
+
+	const data = await overpassQuery(query);
+
+	return data.elements
+		.map((e) => ({
+			name: e.tags.name ?? 'Unnamed',
+			type: e.tags.amenity,
+			lat: e.lat,
+			lng: e.lon,
+			distance: haversine(lat, lng, e.lat, e.lon),
+		}))
+		.sort((a, b) => a.distance - b.distance);
+}
+
+function haversine(lat1, lng1, lat2, lng2) {
+	const R = 6371; // Earth radius in km
+	const dLat = ((lat2 - lat1) * Math.PI) / 180;
+	const dLng = ((lng2 - lng1) * Math.PI) / 180;
+	const a =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos((lat1 * Math.PI) / 180) *
+			Math.cos((lat2 * Math.PI) / 180) *
+			Math.sin(dLng / 2) ** 2;
+	return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+```
+
+---
+
+## 5. Tourism Map — Tempat Wisata & Heritage Padang
+
+**Konteks:** Aplikasi pariwisata yang menampilkan destinasi wisata, museum,
+dan landmark heritage di Padang untuk turis maupun warga lokal.
+
+**Solusi:** Query OSM dengan tag `tourism=*` dan `historic=*`, kombinasikan
+sebagai layer wisata komprehensif.
+
+### Preview Tourism Map
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; max-width: 480px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="font-weight: 600; color: #111827; font-size: 14px; margin-bottom: 12px;">Tempat Wisata Padang</div>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 10px; padding: 14px;">
+      <div style="font-size: 24px; margin-bottom: 8px;">🏖️</div>
+      <div style="font-weight: 600; font-size: 13px; color: #111827;">Pantai Padang</div>
+      <div style="font-size: 11px; color: #78350f; margin-top: 2px;">Padang Barat</div>
+      <div style="margin-top: 8px; font-size: 10px; color: #92400e;">attraction</div>
+    </div>
+    <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 10px; padding: 14px;">
+      <div style="font-size: 24px; margin-bottom: 8px;">🏛️</div>
+      <div style="font-weight: 600; font-size: 13px; color: #111827;">Museum Adityawarman</div>
+      <div style="font-size: 11px; color: #1e3a8a; margin-top: 2px;">Padang Barat</div>
+      <div style="margin-top: 8px; font-size: 10px; color: #1e40af;">museum</div>
+    </div>
+    <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 10px; padding: 14px;">
+      <div style="font-size: 24px; margin-bottom: 8px;">🗿</div>
+      <div style="font-weight: 600; font-size: 13px; color: #111827;">Jembatan Siti Nurbaya</div>
+      <div style="font-size: 11px; color: #065f46; margin-top: 2px;">Padang Selatan</div>
+      <div style="margin-top: 8px; font-size: 10px; color: #047857;">heritage</div>
+    </div>
+    <div style="background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); border-radius: 10px; padding: 14px;">
+      <div style="font-size: 24px; margin-bottom: 8px;">⛰️</div>
+      <div style="font-weight: 600; font-size: 13px; color: #111827;">Gunung Padang</div>
+      <div style="font-size: 11px; color: #831843; margin-top: 2px;">Padang Selatan</div>
+      <div style="margin-top: 8px; font-size: 10px; color: #9f1239;">viewpoint</div>
+    </div>
+  </div>
+</div>
+
+### Implementasi
+
+```js
+const query = `
+	[out:json][timeout:25];
+	area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+	(
+		node["tourism"~"attraction|museum|viewpoint"](area.padang);
+		node["historic"](area.padang);
+		way["tourism"~"attraction|museum|viewpoint"](area.padang);
+	);
+	out center;
+`;
+
+async function getTourismLocations() {
+	const data = await overpassQuery(query);
+
+	return data.elements
+		.filter((e) => e.tags?.name)
+		.map((e) => ({
+			name: e.tags.name,
+			category: e.tags.tourism ?? e.tags.historic ?? 'unknown',
+			lat: e.lat ?? e.center?.lat,
+			lng: e.lon ?? e.center?.lon,
+			description: e.tags.description ?? e.tags['description:id'] ?? null,
+			wikipedia: e.tags.wikipedia ?? null,
+		}));
+}
+```
+
+---
+
+## Use Case Lain yang Dapat Dieksplorasi
+
+- **Walking tour generator** — generate rute jalan kaki melewati POI menarik
+- **Halal restaurant filter** — filter resto dengan tag `cuisine` atau atribut religious
+- **Wheelchair accessibility map** — filter POI dengan tag `wheelchair=yes`
+- **Pasar tradisional locator** — `amenity=marketplace` di Padang
+- **Wifi spot finder** — `internet_access=wlan` untuk pekerja remote
+- **Public toilet finder** — `amenity=toilets`
+
+<LinkCard
+	title="Memiliki Use Case Lain?"
+	description="Mohon laporkan melalui Issue di GitHub agar dapat ditambahkan ke katalog ini."
+	href="https://github.com/superemem/openpadang/issues/new"
+/>
+
+---
+
+<Aside type="note">
+	Saat menggunakan data OSM, sertakan kredit "© OpenStreetMap contributors"
+	dan link ke [osm.org/copyright](https://www.openstreetmap.org/copyright).
+</Aside>

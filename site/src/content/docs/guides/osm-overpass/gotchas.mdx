@@ -1,0 +1,303 @@
+---
+title: OSM Overpass — Gotchas & Limitations
+description: Pitfalls, quirks pada Overpass API, query optimization, dan common errors.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Overpass API powerful, namun memiliki sejumlah quirks dan limitations yang
+perlu diantisipasi. Berikut hasil observasi dari production usage.
+
+## ⚠️ Timeout — Query Kompleks Butuh Timeout Tinggi
+
+Default timeout adalah 180 detik. Query yang melibatkan area lookup atau
+multiple element type sering melebihi default.
+
+```
+// ❌ SALAH: query luas tanpa timeout custom
+[out:json];
+area["name"="Sumatera Barat"]->.sumbar;
+node["amenity"](area.sumbar);
+out body;
+
+// ✅ BENAR: set timeout sesuai kebutuhan
+[out:json][timeout:120];
+area["name"="Sumatera Barat"]->.sumbar;
+node["amenity"](area.sumbar);
+out body;
+```
+
+**Rekomendasi timeout:**
+
+| Scope | Timeout |
+|---|---|
+| Single amenity di 1 kecamatan | 25 detik (default Overpass Turbo) |
+| Multiple amenity di kota | 60-90 detik |
+| Province-wide query | 120-300 detik |
+
+## ⚠️ Rate Limit Informal
+
+Overpass API tidak mempublikasikan rate limit eksplisit, namun berdasarkan
+observasi:
+
+- ~10,000 queries per hari per IP umumnya aman
+- Burst request (parallel banyak) dapat memicu HTTP 429 atau 504
+- Server publik (`overpass-api.de`) terkadang slow saat peak hour
+
+**Strategi:**
+
+1. **Cache di sisi server** — output OSM relatif statis (POI jarang berubah)
+2. **Throttle request** dengan concurrency limit
+3. **Gunakan mirror** apabila server utama lambat
+4. **Self-host Overpass** untuk volume tinggi (advanced)
+
+```js
+import pLimit from 'p-limit';
+const limit = pLimit(3); // max 3 concurrent
+
+const results = await Promise.all(
+	queries.map((q) => limit(() => overpassQuery(q)))
+);
+```
+
+## ⚠️ Tag Inconsistency
+
+OSM bersifat **community-edited**, sehingga tag dapat tidak konsisten:
+
+- Tidak semua POI memiliki tag `name`
+- Tag `name:id` (Indonesian) terkadang berbeda dengan `name` (default)
+- Tag `addr:street`, `addr:city` tidak selalu tersedia
+- Spelling variations: "Padang Barat" vs "Padang Bara"
+
+```js
+// ❌ SALAH: assume semua element punya nama
+elements.forEach((e) => {
+	console.log(e.tags.name); // bisa undefined
+});
+
+// ✅ BENAR: defensive
+elements
+	.filter((e) => e.tags?.name) // skip yang tidak punya nama
+	.forEach((e) => {
+		const name = e.tags['name:id'] ?? e.tags.name ?? 'Tanpa Nama';
+		console.log(name);
+	});
+```
+
+## ⚠️ Way vs Node — Geometry Berbeda
+
+POI di OSM bisa di-tag sebagai `node` (titik) atau `way` (poligon/area).
+Building besar biasanya `way`, POI kecil biasanya `node`.
+
+```js
+// ❌ SALAH: assume semua punya lat/lon langsung
+elements.forEach((e) => {
+	console.log(e.lat, e.lon); // way tidak punya lat/lon top-level
+});
+
+// ✅ BENAR: handle keduanya
+const query = `
+	[out:json];
+	(
+		node["amenity"="restaurant"](area.padang);
+		way["amenity"="restaurant"](area.padang);
+	);
+	out center;
+`;
+
+elements.forEach((e) => {
+	const lat = e.lat ?? e.center?.lat;
+	const lng = e.lon ?? e.center?.lon;
+});
+```
+
+`out center` memberikan titik tengah way sebagai single point — practical
+untuk mapping POI.
+
+## ⚠️ Area Lookup — Nama Harus Tepat
+
+Query area dengan nama harus presis. "Padang" bisa ambigu (Kota Padang vs
+Padang Pariaman vs Padang Lawas).
+
+```
+// ❌ AMBIGU
+area["name"="Padang"]
+
+// ✅ SPESIFIK
+area["name"="Kota Padang"]["admin_level"="5"]
+area["name"="Sumatera Barat"]["admin_level"="4"]
+```
+
+**Best practice:** selalu sertakan `admin_level` untuk menghindari ambiguity.
+
+| Admin Level | Indonesia Context |
+|---|---|
+| 2 | Country |
+| 4 | Province |
+| 5 | Kota/Kabupaten |
+| 6 | Kecamatan |
+| 7 | Kelurahan/Desa |
+
+## ⚠️ Encoding URL untuk Query Panjang
+
+Query panjang tidak cocok dengan GET request. Gunakan POST dengan
+form-encoded body.
+
+```js
+// ❌ SALAH: query panjang via GET
+fetch(`https://overpass-api.de/api/interpreter?data=${query}`);
+// URL bisa terpotong atau encoding error
+
+// ✅ BENAR: POST dengan body
+fetch('https://overpass-api.de/api/interpreter', {
+	method: 'POST',
+	body: `data=${encodeURIComponent(query)}`,
+	headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+});
+```
+
+## ⚠️ Output `body` vs `geom` vs `center`
+
+Output type mempengaruhi ukuran response dan informasi yang tersedia.
+
+| Output | Returns | Use Case |
+|---|---|---|
+| `out body` | Tags, no geometry | Hanya butuh metadata |
+| `out geom` | Tags + full geometry | Render polygon way |
+| `out center` | Tags + titik tengah | POI mapping (paling sering) |
+| `out tags` | Hanya tags | Statistik tag |
+| `out ids` | Hanya IDs | Lookup ID untuk query selanjutnya |
+
+**Tip:** untuk POI mapping, `out center` paling efisien (response kecil,
+data cukup untuk render marker).
+
+## ⚠️ Recursive `>` untuk Way Detail
+
+Untuk mendapat detail nodes dari way, gunakan recursive `>`:
+
+```
+[out:json];
+way["highway"="primary"](area.padang);
+(._; >;);  // include nodes of ways
+out body;
+```
+
+Tanpa recursive, hanya way (sebagai reference) yang dikembalikan, tidak
+nodes-nya.
+
+## ⚠️ Data Freshness — Bukan Real-Time
+
+Walaupun OSM update community real-time, **Overpass API** menggunakan
+snapshot yang di-update **setiap beberapa menit hingga jam**. Untuk
+data paling baru, gunakan endpoint khusus seperti
+[Latest Updated](https://wiki.openstreetmap.org/wiki/Overpass_API/Latest_OSM_Updates).
+
+## ⚠️ Kelengkapan Data Padang
+
+Coverage OSM untuk Padang bervariasi:
+
+- **Kategori populer** (restoran, kafe, masjid, ATM): coverage baik
+- **Kategori spesifik** (halte bus, wheelchair access, opening_hours): coverage parsial
+- **Area pinggiran/pedesaan**: data kurang lengkap
+
+Kontribusi balik ke OSM via [openstreetmap.org](https://www.openstreetmap.org)
+atau [iD editor](https://www.openstreetmap.org/edit) dianjurkan apabila
+Anda menemukan data yang belum tercatat.
+
+## ⚠️ Atribusi Wajib
+
+Lisensi ODbL **mewajibkan atribusi** saat menggunakan data OSM. Format
+minimum:
+
+```html
+<small>
+	Data peta © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>
+</small>
+```
+
+Tanpa atribusi, penggunaan data OSM **melanggar lisensi**.
+
+## ⚠️ Outage dan Maintenance
+
+Server Overpass publik terkadang:
+- HTTP 504 (gateway timeout)
+- HTTP 429 (too many requests)
+- Slow response saat peak hour
+- Maintenance scheduled
+
+**Defensive coding:**
+
+```js
+async function overpassQuery(query, retries = 3) {
+	const urls = [
+		'https://overpass-api.de/api/interpreter',
+		'https://overpass.kumi.systems/api/interpreter',
+		'https://overpass.openstreetmap.fr/api/interpreter',
+	];
+
+	for (let attempt = 0; attempt < retries; attempt++) {
+		const url = urls[attempt % urls.length];
+		try {
+			const res = await fetch(url, {
+				method: 'POST',
+				body: `data=${encodeURIComponent(query)}`,
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				signal: AbortSignal.timeout(60_000),
+			});
+
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			return await res.json();
+		} catch (err) {
+			console.warn(`Overpass attempt ${attempt + 1} failed:`, err);
+			if (attempt === retries - 1) throw err;
+			await new Promise((r) => setTimeout(r, 2000)); // 2s backoff
+		}
+	}
+}
+```
+
+## ⚠️ Tag Wikipedia/Wikidata Tidak Selalu Ada
+
+Untuk integrasi dengan Wikipedia/Wikidata (e.g., menampilkan deskripsi POI):
+
+```js
+const wikipedia = e.tags?.wikipedia; // "id:Pantai Padang"
+const wikidata = e.tags?.wikidata; // "Q12345"
+
+// Fetch Wikipedia article kalau ada
+if (wikipedia) {
+	const [lang, title] = wikipedia.split(':');
+	const res = await fetch(
+		`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
+	);
+}
+```
+
+---
+
+## Limitations OpenPadang Highlight
+
+| Limitation | Workaround |
+|---|---|
+| Tidak ada API key/auth | Tidak diperlukan |
+| Rate limit informal ~10k/day | Cache + throttle |
+| Tag inconsistency (name, address) | Defensive checks, fallback ke `name:id` |
+| Way vs Node geometry beda | Pakai `out center` untuk POI |
+| Area lookup bisa ambigu | Selalu sertakan `admin_level` |
+| Data freshness bukan real-time | Cache aggressive |
+| Coverage area pedesaan terbatas | Kontribusi balik ke OSM |
+| Server publik kadang lambat | Pakai mirror, retry dengan backoff |
+
+## Belajar Lebih Lanjut
+
+- **Overpass QL Spec:** [wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide](https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide)
+- **Map Features (Tag list):** [wiki.openstreetmap.org/wiki/Map_Features](https://wiki.openstreetmap.org/wiki/Map_Features)
+- **Taginfo:** [taginfo.openstreetmap.org](https://taginfo.openstreetmap.org)
+- **Overpass Turbo Examples:** [overpass-turbo.eu](https://overpass-turbo.eu) → Examples menu
+
+<Aside type="note">
+	**Last verified:** Mei 2026. Quirks dan limitations Overpass API umumnya
+	stabil, namun infrastructure server publik dapat berubah. Apabila Anda
+	menemukan inkonsistensi baru, mohon laporkan melalui
+	[GitHub Issue](https://github.com/superemem/openpadang/issues).
+</Aside>

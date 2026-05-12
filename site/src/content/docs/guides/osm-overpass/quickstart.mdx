@@ -1,0 +1,234 @@
+---
+title: OSM Overpass API — Quick Start
+description: Panduan singkat akses data OpenStreetMap untuk Padang melalui Overpass API. Tanpa API key, gratis, output JSON/GeoJSON.
+---
+
+import { Aside, Steps, Tabs, TabItem, Badge, LinkCard } from '@astrojs/starlight/components';
+
+<Aside type="tip" title="Setup dalam 5 menit">
+	OpenStreetMap (OSM) menyediakan akses gratis ke jutaan data geospasial
+	melalui Overpass API. Tanpa autentikasi, mendukung query bahasa khusus
+	yang powerful untuk filter POI, road network, building, dan tag spasial
+	lainnya.
+</Aside>
+
+## Apa yang Akan Diperoleh
+
+Melalui Overpass API, Anda dapat mengekstrak data geospasial Padang dengan
+detail tinggi:
+
+- **POI (Points of Interest)** — restoran, masjid, sekolah, rumah sakit, halte, ATM, hotel, dan ratusan kategori lainnya
+- **Road network** — jalan, jembatan, jalur sepeda
+- **Buildings** — footprint bangunan dengan metadata
+- **Administrative boundaries** — batas kelurahan, kecamatan, kota
+- **Public transport** — halte, jalur bus, stasiun
+- **Natural features** — sungai, pantai, hutan
+
+Seluruh data berlisensi **ODbL (Open Database License)** — bebas digunakan
+untuk tujuan apa pun dengan atribusi ke OpenStreetMap dan kontributornya.
+
+## Langkah-Langkah
+
+<Steps>
+
+1. **Buka Overpass Turbo** sebagai editor visual untuk membangun query:
+   [overpass-turbo.eu](https://overpass-turbo.eu/)
+
+2. **Paste query berikut** untuk mendapatkan semua kafe di Kota Padang:
+
+   ```
+   [out:json][timeout:25];
+   area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+   (
+     node["amenity"="cafe"](area.padang);
+     way["amenity"="cafe"](area.padang);
+   );
+   out center;
+   ```
+
+3. **Klik "Run"** di pojok kiri atas. Hasil akan muncul di peta dan tab
+   "Data" sebagai JSON.
+
+4. **Export hasil** menggunakan menu "Export" — pilih format JSON, GeoJSON,
+   atau KML sesuai kebutuhan.
+
+5. **Integrasikan ke aplikasi** dengan memanggil API langsung tanpa UI:
+
+   ```
+   https://overpass-api.de/api/interpreter?data=<URL_ENCODED_QUERY>
+   ```
+
+</Steps>
+
+## Contoh Implementasi
+
+<Tabs>
+<TabItem label="cURL">
+
+```bash
+curl -X POST https://overpass-api.de/api/interpreter \
+  --data-urlencode "data=[out:json];area[name=\"Kota Padang\"][admin_level=5]->.p;node[amenity=cafe](area.p);out;" \
+  | jq '.elements | length'
+```
+
+</TabItem>
+<TabItem label="JavaScript">
+
+```js
+const query = `
+[out:json][timeout:25];
+area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+(
+  node["amenity"="cafe"](area.padang);
+);
+out center;
+`;
+
+const res = await fetch('https://overpass-api.de/api/interpreter', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	body: `data=${encodeURIComponent(query)}`,
+});
+
+const { elements } = await res.json();
+
+console.log(`Ditemukan ${elements.length} kafe di Padang`);
+elements.slice(0, 5).forEach((e) => {
+	console.log(`- ${e.tags.name ?? 'Unnamed'} (${e.lat}, ${e.lon})`);
+});
+```
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+import requests
+
+query = """
+[out:json][timeout:25];
+area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+(
+  node["amenity"="cafe"](area.padang);
+);
+out center;
+"""
+
+res = requests.post(
+    'https://overpass-api.de/api/interpreter',
+    data={'data': query}
+)
+elements = res.json()['elements']
+
+print(f"Ditemukan {len(elements)} kafe di Padang")
+for e in elements[:5]:
+    name = e.get('tags', {}).get('name', 'Unnamed')
+    print(f"- {name} ({e['lat']}, {e['lon']})")
+```
+
+</TabItem>
+<TabItem label="SvelteKit">
+
+```ts
+// src/routes/api/osm/poi/+server.ts
+import { json } from '@sveltejs/kit';
+
+const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+
+export async function GET({ url }) {
+	const amenity = url.searchParams.get('amenity') ?? 'cafe';
+
+	const query = `
+		[out:json][timeout:25];
+		area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+		(
+			node["amenity"="${amenity}"](area.padang);
+			way["amenity"="${amenity}"](area.padang);
+		);
+		out center;
+	`;
+
+	const res = await fetch(OVERPASS_URL, {
+		method: 'POST',
+		body: `data=${encodeURIComponent(query)}`,
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	});
+
+	const data = await res.json();
+	return json(data);
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Query Bounding Box untuk Padang
+
+Selain menggunakan area name, Anda dapat membatasi query dengan bounding box
+geografis. Approximate bbox Kota Padang:
+
+```
+South: -1.05
+West:  100.25
+North: -0.85
+East:  100.50
+```
+
+**Format query:** `(south, west, north, east)`
+
+```
+[out:json];
+node["amenity"="hospital"](-1.05,100.25,-0.85,100.50);
+out body;
+```
+
+Bbox lebih cepat dibanding area lookup, namun kurang presisi (mencakup area
+di luar batas administratif Padang).
+
+## Filter berdasarkan Kategori
+
+OSM menggunakan tag-based system. Beberapa tag populer untuk Padang:
+
+```js
+const POPULAR_TAGS = {
+	'amenity=restaurant': 'Restoran',
+	'amenity=cafe': 'Kafe',
+	'amenity=mosque': 'Masjid',
+	'amenity=hospital': 'Rumah Sakit',
+	'amenity=school': 'Sekolah',
+	'amenity=fuel': 'SPBU',
+	'amenity=atm': 'ATM',
+	'shop=supermarket': 'Supermarket',
+	'tourism=hotel': 'Hotel',
+	'tourism=attraction': 'Tempat Wisata',
+	'highway=bus_stop': 'Halte Bus',
+};
+```
+
+## Langkah Selanjutnya
+
+<LinkCard
+	title="Query Reference & Overpass QL"
+	description="Sintaks Overpass Query Language lengkap dengan operator, filter, dan output formatting."
+	href="/guides/osm-overpass/endpoints/"
+/>
+
+<LinkCard
+	title="Use Cases & Implementasi"
+	description="5 skenario nyata: POI directory, halte mapping, food finder, dan lainnya."
+	href="/guides/osm-overpass/use-cases/"
+/>
+
+<LinkCard
+	title="Gotchas & Limitations"
+	description="Pitfalls umum: timeout, rate limit, tag inconsistency, encoding."
+	href="/guides/osm-overpass/gotchas/"
+/>
+
+---
+
+<Aside type="note">
+	**Atribusi wajib:** Saat menggunakan data OSM, sertakan kredit
+	"© OpenStreetMap contributors" dan link ke
+	[osm.org/copyright](https://www.openstreetmap.org/copyright). Ini wajib
+	per ketentuan ODbL license.
+</Aside>

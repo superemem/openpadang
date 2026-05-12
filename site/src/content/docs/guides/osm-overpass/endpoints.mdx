@@ -1,0 +1,294 @@
+---
+title: OSM Overpass — Query Reference
+description: Sintaks Overpass Query Language, operator, output formatting, dan tag taxonomy untuk Padang.
+---
+
+import { Aside, Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+
+Overpass API menggunakan bahasa query khusus bernama **Overpass QL** untuk
+mengakses dan memfilter data OSM. Halaman ini memberikan reference sintaks
+dengan fokus pada penggunaan untuk Padang.
+
+## Base Endpoint
+
+```
+POST https://overpass-api.de/api/interpreter
+GET  https://overpass-api.de/api/interpreter?data=<query>
+```
+
+**Catatan:** POST direkomendasikan untuk query panjang. Body request adalah
+form-encoded `data=<query>`.
+
+### Server Alternatif
+
+Apabila server utama lambat, gunakan mirror:
+
+- `https://overpass.kumi.systems/api/interpreter`
+- `https://overpass.openstreetmap.fr/api/interpreter`
+- `https://overpass.osm.ch/api/interpreter`
+
+## Struktur Query Dasar
+
+```
+[out:FORMAT][timeout:SECONDS];
+SCOPE_STATEMENT;
+out OUTPUT_TYPE;
+```
+
+**Contoh minimal:**
+
+```
+[out:json][timeout:25];
+node["amenity"="cafe"]({{bbox}});
+out body;
+```
+
+## Format Output
+
+Ditentukan dengan `[out:FORMAT]`:
+
+| Format | Penjelasan |
+|---|---|
+| `json` | JSON (paling sering digunakan untuk integrasi) |
+| `xml` | XML (default OSM) |
+| `csv` | Tabular CSV (memerlukan output specifier) |
+| `popup` | HTML untuk display |
+
+## Element Types
+
+OSM memiliki 3 jenis elemen:
+
+| Type | Deskripsi | Contoh |
+|---|---|---|
+| `node` | Titik tunggal (lat/lng) | POI seperti cafe, ATM |
+| `way` | Garis atau area (urutan nodes) | Jalan, building outline |
+| `relation` | Kumpulan elements | Rute bus, multipolygon |
+
+```
+node["amenity"="cafe"];
+way["building"];
+relation["type"="route"]["route"="bus"];
+```
+
+## Filter berdasarkan Tag
+
+### Equals
+
+```
+["amenity"="hospital"]
+```
+
+### Exists (tag ada, value apa pun)
+
+```
+["amenity"]
+```
+
+### Not Equals
+
+```
+["amenity"!="hospital"]
+```
+
+### Regex
+
+```
+["name"~"Padang"]              // contains
+["name"~"^Padang"]             // starts with
+["amenity"~"^cafe|restaurant$"]  // multiple values
+```
+
+### Multiple Filters (AND logic)
+
+```
+node["amenity"="restaurant"]["cuisine"="indonesian"]({{bbox}});
+```
+
+### OR Logic (Union)
+
+```
+(
+  node["amenity"="restaurant"];
+  node["amenity"="cafe"];
+);
+```
+
+## Area Filter
+
+Dua cara membatasi area pencarian:
+
+### 1. Bounding Box
+
+```
+node["amenity"="cafe"](-1.05, 100.25, -0.85, 100.50);
+//                     south  west    north  east
+```
+
+### 2. Area Name (Polygon Administratif)
+
+```
+area["name"="Kota Padang"]["admin_level"="5"]->.padang;
+node["amenity"="cafe"](area.padang);
+```
+
+**Admin levels untuk Indonesia:**
+
+| Level | Region |
+|---|---|
+| 2 | Country (Indonesia) |
+| 4 | Province (Sumatera Barat) |
+| 5 | Kota/Kabupaten (Kota Padang) |
+| 6 | Kecamatan (Padang Barat) |
+| 7 | Kelurahan (Belakang Tangsi) |
+
+## Output Statement
+
+Format `out`:
+
+```
+out [OUTPUT_TYPE] [LIMIT];
+```
+
+**Output types:**
+
+| Type | Returns |
+|---|---|
+| `body` | Element + tags, no geometry |
+| `geom` | Element + tags + geometry (untuk way/relation) |
+| `center` | Element + tags + lat/lng titik tengah (untuk way) |
+| `bb` | Element + tags + bounding box |
+| `count` | Hanya count, no elements |
+| `ids` | Hanya IDs |
+
+**Limit:**
+
+```
+out body 10;       // max 10 elements
+out body 100;
+```
+
+## Recursive Operators
+
+Untuk dapat detail elemen yang terhubung (e.g., nodes dari way):
+
+```
+(
+  way["highway"](area.padang);
+  >;  // Recurse down: ambil nodes dari ways
+);
+out body;
+```
+
+## Tag Taxonomy untuk Padang
+
+### Amenity (POI Utama)
+
+| Tag | Deskripsi |
+|---|---|
+| `amenity=restaurant` | Restoran |
+| `amenity=cafe` | Kafe |
+| `amenity=fast_food` | Fast food |
+| `amenity=mosque` | Masjid |
+| `amenity=place_of_worship` | Tempat ibadah |
+| `amenity=hospital` | Rumah sakit |
+| `amenity=clinic` | Klinik |
+| `amenity=school` | Sekolah |
+| `amenity=university` | Universitas |
+| `amenity=fuel` | SPBU |
+| `amenity=atm` | ATM |
+| `amenity=bank` | Bank |
+| `amenity=marketplace` | Pasar |
+| `amenity=parking` | Parkir |
+
+### Shop
+
+| Tag | Deskripsi |
+|---|---|
+| `shop=supermarket` | Supermarket |
+| `shop=convenience` | Minimarket |
+| `shop=mall` | Pusat perbelanjaan |
+| `shop=electronics` | Elektronik |
+| `shop=clothes` | Pakaian |
+
+### Tourism
+
+| Tag | Deskripsi |
+|---|---|
+| `tourism=hotel` | Hotel |
+| `tourism=guest_house` | Penginapan |
+| `tourism=attraction` | Tempat wisata |
+| `tourism=museum` | Museum |
+| `tourism=viewpoint` | Spot pemandangan |
+
+### Public Transport
+
+| Tag | Deskripsi |
+|---|---|
+| `highway=bus_stop` | Halte bus |
+| `public_transport=stop_position` | Titik berhenti |
+| `public_transport=station` | Stasiun |
+| `aeroway=aerodrome` | Bandara |
+
+### Highway (Roads)
+
+| Tag | Deskripsi |
+|---|---|
+| `highway=motorway` | Jalan tol |
+| `highway=primary` | Jalan utama |
+| `highway=secondary` | Jalan sekunder |
+| `highway=residential` | Jalan perumahan |
+| `highway=footway` | Jalur pejalan |
+
+## Helper: Tag Lookup Resource
+
+Untuk mengeksplorasi tag yang tersedia di OSM:
+
+- [OSM Wiki Map Features](https://wiki.openstreetmap.org/wiki/Map_Features)
+- [Taginfo](https://taginfo.openstreetmap.org/) — statistik penggunaan tag
+- [Overpass Turbo Wizard](https://overpass-turbo.eu/) — generator query dari kata kunci
+
+## Limit & Performance
+
+### Timeout
+
+Default 180 detik. Untuk query kompleks, tingkatkan:
+
+```
+[out:json][timeout:300];
+```
+
+### Maxsize
+
+Limit ukuran response (default 512 MB). Jarang perlu diubah.
+
+```
+[out:json][maxsize:1073741824]; // 1 GB
+```
+
+### Output Limit
+
+Batasi jumlah element yang dikembalikan:
+
+```
+out body 1000;
+```
+
+## Quick Reference Summary
+
+| Aspek | Value |
+|---|---|
+| Method | POST (recommended) or GET |
+| Format | JSON, XML, CSV, popup |
+| Authentication | Tidak diperlukan |
+| Rate Limit | ~10,000 queries/day per IP (informal) |
+| License | ODbL (atribusi wajib) |
+| Coverage | Global, termasuk Padang |
+| Real-time | Update community, mendekati real-time |
+
+---
+
+<Aside type="tip" title="Tips Build Query">
+	Mulai dari [Overpass Turbo](https://overpass-turbo.eu/), gunakan **Wizard
+	(Shift+Space)** untuk generate query dari kata kunci (e.g., "cafe in Padang").
+	Setelah preview di peta, baru integrate ke aplikasi.
+</Aside>

@@ -45,12 +45,22 @@ export default defineConfig({
 						},
 						{
 							label: 'BMKG Cuaca Prakiraan',
-							collapsed: false,
+							collapsed: true,
 							items: [
 								{ label: 'Quick Start', slug: 'guides/bmkg-cuaca/quickstart' },
 								{ label: 'Endpoint Reference', slug: 'guides/bmkg-cuaca/endpoints' },
 								{ label: 'Use Cases Padang', slug: 'guides/bmkg-cuaca/use-cases' },
 								{ label: 'Gotchas & Limitations', slug: 'guides/bmkg-cuaca/gotchas' },
+							],
+						},
+						{
+							label: 'OSM Overpass API',
+							collapsed: false,
+							items: [
+								{ label: 'Quick Start', slug: 'guides/osm-overpass/quickstart' },
+								{ label: 'Query Reference', slug: 'guides/osm-overpass/endpoints' },
+								{ label: 'Use Cases Padang', slug: 'guides/osm-overpass/use-cases' },
+								{ label: 'Gotchas & Limitations', slug: 'guides/osm-overpass/gotchas' },
 							],
 						},
 					],
