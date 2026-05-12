@@ -8,42 +8,25 @@ import { Aside } from '@astrojs/starlight/components';
 API BMKG Cuaca memiliki sejumlah quirks yang perlu diantisipasi sebelum
 deployment. Berikut adalah hasil observasi dari penggunaan production.
 
-## ⚠️ Hanya `adm4` yang Berfungsi
+## ⚠️ Endpoint Legacy Hanya Support `adm4`
 
-Berdasarkan testing per Mei 2026, hanya parameter `adm4` (kelurahan) yang
-mengembalikan JSON valid. Parameter `adm1`, `adm2`, dan `adm3` mengembalikan
-**HTML landing page BMKG**, bukan data prakiraan.
+BMKG memiliki dua endpoint dengan kemampuan berbeda:
 
-```js
-// ❌ TIDAK BEKERJA: return HTML, bukan JSON
-fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm2=13.71'); // Kota Padang
-fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm3=13.71.09'); // Kuranji
-
-// ✅ BERFUNGSI: parameter adm4 saja
-fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001'); // Pasar Ambacang
-```
-
-**Workaround untuk data agregat kota/kecamatan:** lakukan multiple request per
-kelurahan dan agregasi di sisi client.
+| Endpoint | adm1 | adm2 | adm3 | adm4 |
+|---|---|---|---|---|
+| **v2 (cuaca.bmkg.go.id/api/df/v1/forecast/adm)** | ✅ | ✅ | ✅ | ✅ |
+| **legacy (api.bmkg.go.id/publik/prakiraan-cuaca)** | ❌ | ❌ | ❌ | ✅ |
 
 ```js
-const PADANG_SAMPLE_PER_KECAMATAN = [
-	{ name: 'Padang Selatan', adm4: '13.71.01.1001' },
-	{ name: 'Padang Timur', adm4: '13.71.02.1001' },
-	// ... 11 kecamatan total
-];
+// ❌ Endpoint legacy: hanya adm4
+fetch('https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm3=13.71.09'); // Return HTML
 
-async function aggregateBKota() {
-	const results = await Promise.all(
-		PADANG_SAMPLE_PER_KECAMATAN.map((k) =>
-			fetch(`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${k.adm4}`)
-				.then((r) => r.json())
-		)
-	);
-	// Hitung rata-rata, mode weather, dll di sini
-	return results;
-}
+// ✅ Endpoint v2: semua adm level work
+fetch('https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm3=13.71.09'); // Return JSON
 ```
+
+**Rekomendasi:** gunakan endpoint v2 (`cuaca.bmkg.go.id`) untuk fleksibilitas
+penuh.
 
 ## ⚠️ Header `Accept: application/json` Disarankan
 
@@ -52,10 +35,10 @@ Tanpa header `Accept: application/json`, beberapa user agent mendapat
 
 ```js
 // ❌ Bisa mendapat HTML alih-alih JSON
-const res = await fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001');
+const res = await fetch('https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=13.71.09.1001');
 
 // ✅ JSON terjamin
-const res = await fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001', {
+const res = await fetch('https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=13.71.09.1001', {
 	headers: { 'Accept': 'application/json' }
 });
 ```
@@ -216,7 +199,7 @@ export async function GET({ params }) {
 	}
 
 	const res = await fetch(
-		`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`
+		`https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=${adm4}`
 	);
 	const data = await res.json();
 
@@ -262,7 +245,7 @@ lainnya). Skema yang sama, namun URL berbeda. Selalu monitor.
 **Workaround:** wrap endpoint URL sebagai konstanta yang mudah di-update:
 
 ```js
-const BMKG_CUACA_URL = 'https://api.bmkg.go.id/publik/prakiraan-cuaca';
+const BMKG_CUACA_URL = 'https://cuaca.bmkg.go.id/api/df/v1/forecast/adm';
 
 async function getCuaca(adm: { level: string; code: string }) {
 	const url = `${BMKG_CUACA_URL}?${adm.level}=${adm.code}`;

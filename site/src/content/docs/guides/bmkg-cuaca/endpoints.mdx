@@ -10,35 +10,55 @@ hierarkis sesuai level administratif.
 
 ## Base Endpoint
 
+BMKG menyediakan **dua endpoint** untuk prakiraan cuaca:
+
 ```
-GET https://api.bmkg.go.id/publik/prakiraan-cuaca
+1. PRIMARY (v2 — support semua adm level):
+   GET https://cuaca.bmkg.go.id/api/df/v1/forecast/adm
+
+2. LEGACY (hanya adm4):
+   GET https://api.bmkg.go.id/publik/prakiraan-cuaca
 ```
+
+**Rekomendasi:** gunakan endpoint v2 (`cuaca.bmkg.go.id`) untuk fleksibilitas
+penuh dari level provinsi hingga kelurahan dalam single request.
+
+Header `Accept: application/json` disarankan disertakan untuk menghindari
+redirect ke landing page HTML.
 
 ## Query Parameters
 
-<Aside type="caution" title="Penting: Hanya `adm4` yang Work">
-	Berdasarkan testing per Mei 2026, **hanya parameter `adm4` (kelurahan)
-	yang mengembalikan JSON valid**. Parameter `adm1`, `adm2`, dan `adm3`
-	mengembalikan HTML landing page BMKG, bukan data prakiraan.
+Endpoint v2 (`cuaca.bmkg.go.id/api/df/v1/forecast/adm`) menerima parameter level wilayah:
 
-	Untuk mendapatkan data agregat (kota, kecamatan), Anda perlu melakukan
-	multiple request per kelurahan dan menggabungkan di sisi client.
-</Aside>
-
-Endpoint menerima parameter level wilayah:
-
-| Parameter | Level | Format | Status | Contoh (Padang) |
+| Parameter | Level | Format | Contoh (Padang) | Returns |
 |---|---|---|---|---|
-| `adm1` | Provinsi | 2 digit | ❌ Return HTML | `13` (Sumatera Barat) |
-| `adm2` | Kabupaten/Kota | 5 digit | ❌ Return HTML | `13.71` (Kota Padang) |
-| `adm3` | Kecamatan | 8 digit | ❌ Return HTML | `13.71.09` (Kuranji) |
-| `adm4` | Kelurahan/Desa | 13 digit | ✅ Return JSON | `13.71.09.1001` (Pasar Ambacang) |
+| `adm1` | Provinsi | 2 digit | `13` (Sumatera Barat) | 19 kabupaten/kota |
+| `adm2` | Kabupaten/Kota | 5 digit | `13.71` (Kota Padang) | 11 kecamatan |
+| `adm3` | Kecamatan | 8 digit | `13.71.09` (Kuranji) | 9 kelurahan |
+| `adm4` | Kelurahan/Desa | 13 digit | `13.71.09.1001` (Pasar Ambacang) | 1 entry |
 
-**Contoh URL yang berfungsi:**
+**Behavior:** Endpoint mengembalikan **array entries** di field `data`, satu
+entry per **child level** dari yang diminta. Misalnya:
+- `adm1=13` → array 19 kabupaten/kota di Sumbar
+- `adm2=13.71` → array 11 kecamatan di Padang
+- `adm3=13.71.09` → array 9 kelurahan di Kuranji
+- `adm4=13.71.09.1001` → array 1 entry (single kelurahan)
+
+**Contoh URL berfungsi:**
 
 ```
-https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001
+https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm1=13
+https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm2=13.71
+https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm3=13.71.09
+https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=13.71.09.1001
 ```
+
+<Aside type="caution" title="Endpoint Legacy Hanya Support adm4">
+	Endpoint legacy (`api.bmkg.go.id/publik/prakiraan-cuaca`) hanya menerima
+	parameter `adm4`. Parameter `adm1`/`adm2`/`adm3` akan return HTML landing
+	page, bukan JSON. **Gunakan endpoint v2 (cuaca.bmkg.go.id) untuk semua
+	level wilayah.**
+</Aside>
 
 ## Response Schema
 
@@ -208,9 +228,12 @@ Tidak diperlukan. Endpoint bersifat publik tanpa API key.
 
 | Aspek | Value |
 |---|---|
+| Primary Endpoint | `https://cuaca.bmkg.go.id/api/df/v1/forecast/adm` |
+| Legacy Endpoint | `https://api.bmkg.go.id/publik/prakiraan-cuaca` (adm4 only) |
 | Method | GET |
 | Format | JSON |
-| Granularity | **Hanya adm4** (kelurahan) yang work — adm1/adm2/adm3 return HTML |
+| Granularity | adm1 (provinsi) → adm2 (kota) → adm3 (kecamatan) → adm4 (kelurahan) |
+| Behavior | Returns array entries (1 per child level) |
 | Refresh | 6-12 jam |
 | Forecast horizon | ~51 jam (17 interval @ 3 jam) |
 | CORS | Enabled |

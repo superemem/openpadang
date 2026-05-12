@@ -35,18 +35,29 @@ agribisnis, hingga sistem warning cuaca ekstrem.
    (`adm4`). Contoh: Kelurahan Pasar Ambacang (Kuranji) = `13.71.09.1001`.
    (Lihat referensi lengkap di [Endpoint Reference](/guides/bmkg-cuaca/endpoints/)).
 
-   <Aside type="caution">
-     Endpoint **hanya menerima parameter `adm4`** (kelurahan). Parameter
-     `adm1`/`adm2`/`adm3` mengembalikan HTML landing page, bukan JSON.
+   <Aside type="tip" title="Endpoint v2 untuk Semua Level">
+     Endpoint v2 (`cuaca.bmkg.go.id/api/df/v1/forecast/adm`) mendukung
+     adm1 hingga adm4. Endpoint legacy (`api.bmkg.go.id/publik/prakiraan-cuaca`)
+     hanya mendukung adm4.
+     hanya mendukung adm4.
    </Aside>
 
-2. **Akses endpoint** dengan parameter `adm4` dan header `Accept: application/json`:
+2. **Akses endpoint v2** dengan parameter level wilayah dan header `Accept: application/json`:
 
    ```
-   https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001
+   https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=13.71.09.1001
    ```
 
-   Response berupa data prakiraan dalam format JSON.
+   Atau untuk level lebih tinggi:
+
+   ```
+   https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm3=13.71.09   # kecamatan
+   https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm2=13.71      # kota
+   https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm1=13         # provinsi
+   ```
+
+   Response berupa data prakiraan dalam format JSON, dengan jumlah entries
+   sesuai dengan child level (e.g., adm3 returns array kelurahan).
 
 3. **Parse response** dalam aplikasi Anda. Struktur response (disederhanakan):
 
@@ -110,9 +121,15 @@ agribisnis, hingga sistem warning cuaca ekstrem.
 <TabItem label="cURL">
 
 ```bash
-curl -s -H "Accept: application/json" -H "User-Agent: curl/8.0" \
-  "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.09.1001" \
+# Single kelurahan
+curl -s -H "Accept: application/json" \
+  "https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=13.71.09.1001" \
   | jq '.data[0].cuaca[0][0]'
+
+# Semua kelurahan di Kuranji (1 request, 9 kelurahan)
+curl -s -H "Accept: application/json" \
+  "https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm3=13.71.09" \
+  | jq '.data[].lokasi.desa'
 ```
 
 </TabItem>
@@ -121,7 +138,7 @@ curl -s -H "Accept: application/json" -H "User-Agent: curl/8.0" \
 ```js
 const adm4 = '13.71.09.1001'; // Kelurahan Pasar Ambacang, Kuranji
 const res = await fetch(
-	`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`,
+	`https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=${adm4}`,
 	{ headers: { 'Accept': 'application/json' } }
 );
 const { lokasi, data } = await res.json();
@@ -140,7 +157,7 @@ console.log(`Kelembapan ${cuacaTerkini.hu}% · Angin ${cuacaTerkini.ws} km/h`);
 import requests
 
 adm4 = "13.71.09.1001"  # Kelurahan Pasar Ambacang, Kuranji
-url = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={adm4}"
+url = f"https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4={adm4}"
 headers = {"Accept": "application/json"}
 res = requests.get(url, headers=headers).json()
 
@@ -162,7 +179,7 @@ import { json } from '@sveltejs/kit';
 export async function GET({ params }) {
 	const { adm4 } = params;
 	const res = await fetch(
-		`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`,
+		`https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=${adm4}`,
 		{ headers: { 'Accept': 'application/json' } }
 	);
 	const data = await res.json();
@@ -175,43 +192,46 @@ export async function GET({ params }) {
 
 ## Cuaca untuk Multi-Kelurahan Padang
 
-Padang memiliki 11 kecamatan dengan 104 kelurahan. Untuk dashboard yang
-menampilkan multiple lokasi, lakukan parallel request:
+Untuk mendapatkan data semua kelurahan di satu kecamatan, cukup **1 request
+dengan parameter `adm3`** — endpoint v2 mengembalikan array semua kelurahan
+sebagai child level:
 
 ```js
-const PADANG_LOKASI = [
-	{ name: 'Padang Selatan', adm4: '13.71.01.1001' },
-	{ name: 'Padang Timur', adm4: '13.71.02.1001' },
-	{ name: 'Padang Barat', adm4: '13.71.03.1001' },
-	{ name: 'Padang Utara', adm4: '13.71.04.1001' },
-	{ name: 'Kuranji (Pasar Ambacang)', adm4: '13.71.09.1001' },
-	// ... tambahkan kelurahan lain sesuai kebutuhan
-];
-
-const results = await Promise.all(
-	PADANG_LOKASI.map(async (lokasi) => {
-		const res = await fetch(
-			`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${lokasi.adm4}`
-		);
-		const data = await res.json();
-		return { ...lokasi, cuaca: data.data[0].cuaca[0][0] };
-	})
+// Single request → semua 9 kelurahan di Kecamatan Kuranji
+const res = await fetch(
+	'https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm3=13.71.09',
+	{ headers: { 'Accept': 'application/json' } }
 );
+const { lokasi, data } = await res.json();
 
-console.table(
-	results.map((r) => ({
-		Lokasi: r.name,
-		Cuaca: r.cuaca.weather_desc,
-		Suhu: `${r.cuaca.t}°C`,
-		Kelembapan: `${r.cuaca.hu}%`,
-	}))
-);
+console.log(`Kecamatan: ${lokasi.kecamatan}`);
+console.log(`Jumlah kelurahan: ${data.length}`);
+
+data.forEach((entry) => {
+	const cuaca = entry.cuaca[0][0]; // forecast terkini
+	console.log(`  ${entry.lokasi.desa}: ${cuaca.weather_desc} · ${cuaca.t}°C`);
+});
 ```
 
+Untuk **semua 11 kecamatan Padang sekaligus**, gunakan `adm2=13.71`:
+
+```js
+const res = await fetch(
+	'https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm2=13.71',
+	{ headers: { 'Accept': 'application/json' } }
+);
+const { lokasi, data } = await res.json();
+// data = array 11 kecamatan, masing-masing punya cuaca forecast
+```
+
+<Aside type="tip">
+	Endpoint v2 menghemat banyak request. Sebelumnya butuh 11 request untuk
+	semua kecamatan Padang, sekarang cukup 1 request dengan `adm2=13.71`.
+</Aside>
+
 <Aside type="caution">
-	BMKG tidak mempublikasikan rate limit eksplisit. Untuk multi-request,
-	rekomendasi: gunakan caching di sisi server dan polling tidak lebih cepat
-	dari 1 jam (data refresh setiap 6 jam).
+	BMKG tidak mempublikasikan rate limit eksplisit. Tetap gunakan caching di
+	sisi server, dengan TTL minimal 1 jam (data refresh setiap 6 jam).
 </Aside>
 
 ## Langkah Selanjutnya

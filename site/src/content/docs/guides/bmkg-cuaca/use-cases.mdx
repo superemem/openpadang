@@ -143,7 +143,7 @@ ADM4 = "13.71.09.1001"  # Pasar Ambacang, Kuranji
 HEAVY_RAIN_CODES = [63, 95, 97]  # Hujan Lebat, Hujan Petir
 
 def check_heavy_rain():
-    url = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={ADM4}"
+    url = f"https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4={ADM4}"
     headers = {"Accept": "application/json"}
     data = requests.get(url, headers=headers).json()
 
@@ -335,7 +335,7 @@ async function loadHeatmap() {
 	const results = await Promise.all(
 		PADANG_KECAMATAN_SAMPLE.map(async (k) => {
 			const res = await fetch(
-				`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${k.adm4}`,
+				`https://cuaca.bmkg.go.id/api/df/v1/forecast/adm?adm4=${k.adm4}`,
 				{ headers: { 'Accept': 'application/json' } }
 			);
 			const data = await res.json();
