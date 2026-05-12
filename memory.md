@@ -31,13 +31,18 @@
 - ✅ `app/` SvelteKit + Tailwind 4 + Lucide Svelte + Inter + Bits UI (build pass)
 - ✅ `packages/shared/` design tokens + types
 - ✅ Landing page sederhana di app/
-- ✅ LICENSE (MIT untuk code)
-- ✅ LICENSE-DATA (CC-BY 4.0 untuk data & docs)
+- ✅ LICENSE (MIT untuk code) + LICENSE-DATA (CC-BY 4.0 untuk data)
 - ✅ CONTRIBUTING.md (panduan kontribusi)
 - ✅ README.md updated dengan link ke LICENSE & CONTRIBUTING
-- 🔲 Domain registrasi (postponed — Phase 1 atau setelah dataset pertama)
-- 🔲 Deploy ke Vercel (next, Emen handle sendiri)
-- 🔲 shadcn-svelte init (saat butuh component pertama)
+- ✅ Vercel deployment 2 project (site + app) — by Emen
+- ✅ Scope HYBRID locked (2026-05-12) — list all, curate selective, docs layer untuk Direct API
+- ✅ Custom favicon SVG (site + app) + OG image SVG
+- ✅ shadcn-svelte config manual (components.json + lib/utils.ts)
+- ✅ Landing app improved: CTA buttons, footer, OG meta tags
+- ✅ **BMKG Gempa Guide** (Phase 1 starter) — 4 page: quickstart, endpoints, use-cases, gotchas (commit `8e70e0b`)
+- 🔲 Domain registrasi (postponed)
+- 🔲 Guide untuk source Direct API lain (OSM, PetaBencana, BMKG Cuaca, OWM, InaTEWS)
+- 🔲 First curated dataset (Phase 2): kandidat OSM POI Padang atau BPS Padang demographic
 
 ### Decision yang sudah dibuat
 - **Brand:** OpenPadang (locked)
