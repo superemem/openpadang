@@ -1,0 +1,221 @@
+---
+title: BMKG Cuaca Prakiraan — Quick Start
+description: Panduan singkat akses prakiraan cuaca per kelurahan dari API BMKG. Tanpa API key, gratis, response JSON.
+---
+
+import { Aside, Steps, Tabs, TabItem, Badge, LinkCard } from '@astrojs/starlight/components';
+
+<Aside type="tip" title="Setup dalam 5 menit">
+	BMKG menyediakan endpoint prakiraan cuaca publik tanpa autentikasi.
+	Granularity hingga level kelurahan (adm4) — sangat presisi untuk aplikasi
+	hyperlocal weather.
+</Aside>
+
+## Apa yang Akan Diperoleh
+
+API BMKG Cuaca menyediakan prakiraan dengan tingkat detail bervariasi:
+
+- **Per kelurahan (adm4)** — granularity terhalus, ideal untuk hyperlocal app
+- **Per kecamatan (adm3)** — agregasi tingkat kecamatan
+- **Per kabupaten/kota (adm2)** — gambaran umum kota
+- **Per provinsi (adm1)** — overview provinsi
+
+Output mencakup prakiraan **3 hari ke depan dengan interval 3 jam**: suhu,
+kelembapan, kondisi cuaca, kecepatan angin, dan parameter lainnya.
+
+Seluruh data merupakan **public domain** (data pemerintah) dan dapat digunakan
+untuk berbagai keperluan: weather widget, agenda planning, monitoring
+agribisnis, hingga sistem warning cuaca ekstrem.
+
+## Langkah-Langkah
+
+<Steps>
+
+1. **Tentukan kode wilayah** menggunakan format BPS standar. Untuk Padang Barat
+   (Kelurahan Belakang Tangsi), kode `adm4` adalah `13.71.01.1001`. (Lihat
+   referensi lengkap di [Endpoint Reference](/guides/bmkg-cuaca/endpoints/)).
+
+2. **Akses endpoint** dengan parameter `adm4`:
+
+   ```
+   https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.01.1001
+   ```
+
+   Response berupa data prakiraan dalam format JSON.
+
+3. **Parse response** dalam aplikasi Anda. Struktur response (disederhanakan):
+
+   ```json
+   {
+     "lokasi": {
+       "adm1": "Sumatera Barat",
+       "adm2": "Kota Padang",
+       "adm3": "Padang Barat",
+       "adm4": "Belakang Tangsi",
+       "lon": 100.36,
+       "lat": -0.95,
+       "timezone": "Asia/Jakarta"
+     },
+     "data": [
+       {
+         "lokasi": { "...sama dengan di atas..." },
+         "cuaca": [
+           [
+             {
+               "datetime": "202605120700",
+               "t": 28,
+               "tcc": 75,
+               "tp": 0.2,
+               "weather": 60,
+               "weather_desc": "Hujan Ringan",
+               "hu": 85,
+               "wd": "SE",
+               "ws": 8,
+               "vs_text": "10 km",
+               "time_index": "0"
+             }
+             // ... interval 3 jam berikutnya
+           ]
+         ]
+       }
+     ]
+   }
+   ```
+
+4. **Tampilkan atau proses data** sesuai kebutuhan: dashboard cuaca harian,
+   alert hujan, planning event, dan sebagainya.
+
+</Steps>
+
+## Contoh Implementasi
+
+<Tabs>
+<TabItem label="cURL">
+
+```bash
+curl -s "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.01.1001" \
+  | jq '.data[0].cuaca[0][0]'
+```
+
+</TabItem>
+<TabItem label="JavaScript">
+
+```js
+const adm4 = '13.71.01.1001'; // Kelurahan Belakang Tangsi, Padang Barat
+const res = await fetch(
+	`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`
+);
+const { lokasi, data } = await res.json();
+
+const cuacaTerkini = data[0].cuaca[0][0];
+
+console.log(`Cuaca ${lokasi.adm4}, ${lokasi.adm3}:`);
+console.log(`${cuacaTerkini.weather_desc} · ${cuacaTerkini.t}°C`);
+console.log(`Kelembapan ${cuacaTerkini.hu}% · Angin ${cuacaTerkini.ws} km/h`);
+```
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+import requests
+
+adm4 = "13.71.01.1001"  # Kelurahan Belakang Tangsi, Padang Barat
+url = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={adm4}"
+res = requests.get(url).json()
+
+lokasi = res["lokasi"]
+cuaca = res["data"][0]["cuaca"][0][0]
+
+print(f"Cuaca {lokasi['adm4']}, {lokasi['adm3']}:")
+print(f"{cuaca['weather_desc']} · {cuaca['t']}°C")
+print(f"Kelembapan {cuaca['hu']}% · Angin {cuaca['ws']} km/h")
+```
+
+</TabItem>
+<TabItem label="SvelteKit">
+
+```ts
+// src/routes/api/cuaca/[adm4]/+server.ts
+import { json } from '@sveltejs/kit';
+
+export async function GET({ params }) {
+	const { adm4 } = params;
+	const res = await fetch(
+		`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4}`
+	);
+	const data = await res.json();
+	return json(data);
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Cuaca untuk Multi-Kelurahan Padang
+
+Padang memiliki 11 kecamatan dengan 104 kelurahan. Untuk dashboard yang
+menampilkan multiple lokasi, lakukan parallel request:
+
+```js
+const PADANG_LOKASI = [
+	{ name: 'Padang Barat', adm4: '13.71.01.1001' },
+	{ name: 'Padang Timur', adm4: '13.71.02.1001' },
+	{ name: 'Padang Utara', adm4: '13.71.03.1001' },
+	{ name: 'Padang Selatan', adm4: '13.71.04.1001' },
+	// ... tambahkan kelurahan lain sesuai kebutuhan
+];
+
+const results = await Promise.all(
+	PADANG_LOKASI.map(async (lokasi) => {
+		const res = await fetch(
+			`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${lokasi.adm4}`
+		);
+		const data = await res.json();
+		return { ...lokasi, cuaca: data.data[0].cuaca[0][0] };
+	})
+);
+
+console.table(
+	results.map((r) => ({
+		Lokasi: r.name,
+		Cuaca: r.cuaca.weather_desc,
+		Suhu: `${r.cuaca.t}°C`,
+		Kelembapan: `${r.cuaca.hu}%`,
+	}))
+);
+```
+
+<Aside type="caution">
+	BMKG tidak mempublikasikan rate limit eksplisit. Untuk multi-request,
+	rekomendasi: gunakan caching di sisi server dan polling tidak lebih cepat
+	dari 1 jam (data refresh setiap 6 jam).
+</Aside>
+
+## Langkah Selanjutnya
+
+<LinkCard
+	title="Endpoint Reference & Kode Wilayah"
+	description="Parameter lengkap, schema response, dan referensi kode adm1-adm4 untuk wilayah Padang."
+	href="/guides/bmkg-cuaca/endpoints/"
+/>
+
+<LinkCard
+	title="Use Cases & Implementasi"
+	description="5 skenario nyata: weather widget hyperlocal, alert hujan, dashboard agrikultur, dan lainnya."
+	href="/guides/bmkg-cuaca/use-cases/"
+/>
+
+<LinkCard
+	title="Gotchas & Limitations"
+	description="Pitfalls umum: timezone, weather code mapping, refresh rate, response nested deeply."
+	href="/guides/bmkg-cuaca/gotchas/"
+/>
+
+---
+
+<Aside type="note">
+	**Last verified:** Mei 2026. Skema response BMKG dapat berubah sewaktu-waktu.
+	Apabila Anda menemukan inkonsistensi, mohon laporkan melalui
+	[GitHub Issue](https://github.com/superemem/openpadang/issues).
+</Aside>

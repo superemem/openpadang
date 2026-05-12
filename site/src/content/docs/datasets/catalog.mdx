@@ -71,16 +71,18 @@ spesifik untuk konteks Padang/Sumbar.
 
 ### BMKG Cuaca Prakiraan
 
-<Badge text="Guide Coming" variant="caution" />
+<Badge text="Guide Ready" variant="success" />
 
 - **Source:** `api.bmkg.go.id/publik/prakiraan-cuaca?adm4=<kode>`
 - **Format:** JSON
 - **Refresh:** 6 jam
-- **Coverage:** Per kelurahan menggunakan kode `adm4`
+- **Coverage:** Per kelurahan menggunakan kode `adm4` (granularity hingga 104 kelurahan Padang)
 
-**Dokumentasi OpenPadang akan menyediakan:**
-- Mapping kelurahan Padang ke kode adm4
-- Use cases: weather widget per kecamatan, daily forecast aggregation
+📘 **Dokumentasi OpenPadang:**
+- [Quick Start](/guides/bmkg-cuaca/quickstart/) — setup 5 menit
+- [Endpoint Reference](/guides/bmkg-cuaca/endpoints/) — schema, weather codes, kode wilayah Padang
+- [Use Cases Padang](/guides/bmkg-cuaca/use-cases/) — 5 skenario implementasi
+- [Gotchas & Limitations](/guides/bmkg-cuaca/gotchas/) — pitfalls dan quirks
 
 ### InaTEWS BMKG (Tsunami Early Warning)
 

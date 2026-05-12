@@ -35,12 +35,22 @@ export default defineConfig({
 					items: [
 						{
 							label: 'BMKG Gempa Real-Time',
-							collapsed: false,
+							collapsed: true,
 							items: [
 								{ label: 'Quick Start', slug: 'guides/bmkg-gempa/quickstart' },
 								{ label: 'Endpoint Reference', slug: 'guides/bmkg-gempa/endpoints' },
 								{ label: 'Use Cases Padang', slug: 'guides/bmkg-gempa/use-cases' },
 								{ label: 'Gotchas & Limitations', slug: 'guides/bmkg-gempa/gotchas' },
+							],
+						},
+						{
+							label: 'BMKG Cuaca Prakiraan',
+							collapsed: false,
+							items: [
+								{ label: 'Quick Start', slug: 'guides/bmkg-cuaca/quickstart' },
+								{ label: 'Endpoint Reference', slug: 'guides/bmkg-cuaca/endpoints' },
+								{ label: 'Use Cases Padang', slug: 'guides/bmkg-cuaca/use-cases' },
+								{ label: 'Gotchas & Limitations', slug: 'guides/bmkg-cuaca/gotchas' },
 							],
 						},
 					],

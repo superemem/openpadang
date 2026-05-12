@@ -1,0 +1,192 @@
+---
+title: BMKG Cuaca — Endpoint Reference
+description: Reference lengkap endpoint prakiraan cuaca BMKG. Parameter, schema response, weather code, dan kode wilayah Padang.
+---
+
+import { Aside, Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+
+BMKG menyediakan endpoint tunggal untuk prakiraan cuaca dengan parameter
+hierarkis sesuai level administratif.
+
+## Base Endpoint
+
+```
+GET https://api.bmkg.go.id/publik/prakiraan-cuaca
+```
+
+## Query Parameters
+
+Endpoint menerima satu parameter (pilih salah satu sesuai granularity yang
+dibutuhkan):
+
+| Parameter | Level | Format | Contoh (Padang) |
+|---|---|---|---|
+| `adm1` | Provinsi | 2 digit | `13` (Sumatera Barat) |
+| `adm2` | Kabupaten/Kota | 5 digit | `13.71` (Kota Padang) |
+| `adm3` | Kecamatan | 8 digit | `13.71.01` (Padang Barat) |
+| `adm4` | Kelurahan/Desa | 13 digit | `13.71.01.1001` (Belakang Tangsi) |
+
+**Contoh URL:**
+
+```
+https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=13.71.01.1001
+https://api.bmkg.go.id/publik/prakiraan-cuaca?adm2=13.71
+```
+
+## Response Schema
+
+### Top-level Structure
+
+```json
+{
+  "lokasi": {
+    "adm1": "string — nama provinsi",
+    "adm2": "string — nama kabupaten/kota",
+    "adm3": "string — nama kecamatan",
+    "adm4": "string — nama kelurahan",
+    "provinsi": "string",
+    "kotkab": "string",
+    "kecamatan": "string",
+    "desa": "string",
+    "lon": "number — longitude",
+    "lat": "number — latitude",
+    "timezone": "string — 'Asia/Jakarta'"
+  },
+  "data": [
+    {
+      "lokasi": { /* sama dengan di atas */ },
+      "cuaca": [
+        [
+          /* array of forecasts per interval 3 jam */
+        ]
+      ]
+    }
+  ]
+}
+```
+
+### Per-Forecast Entry
+
+```json
+{
+  "datetime": "string — '202605120700' (YYYYMMDDHHMM, lokal WIB)",
+  "utc_datetime": "string ISO 8601 UTC",
+  "local_datetime": "string ISO 8601 WIB",
+  "t": "number — suhu °C",
+  "tcc": "number — Total Cloud Cover (%)",
+  "tp": "number — Total Precipitation (mm)",
+  "weather": "number — weather code (lihat tabel di bawah)",
+  "weather_desc": "string — deskripsi cuaca (e.g., 'Hujan Ringan')",
+  "weather_desc_en": "string — English description",
+  "wd_deg": "number — wind direction (derajat)",
+  "wd": "string — wind direction abbreviation (e.g., 'SE')",
+  "wd_to": "string — wind direction destination",
+  "ws": "number — wind speed (km/h)",
+  "hu": "number — humidity (%)",
+  "vs": "number — visibility (m)",
+  "vs_text": "string — visibility text (e.g., '10 km')",
+  "time_index": "string — '0', '3', '6', '9', '12'"
+}
+```
+
+## Weather Codes
+
+BMKG menggunakan WMO weather codes. Daftar yang umum ditemui:
+
+| Code | Description |
+|---|---|
+| 0 | Cerah |
+| 1 | Cerah Berawan |
+| 2 | Cerah Berawan |
+| 3 | Berawan |
+| 4 | Berawan Tebal |
+| 5 | Udara Kabur |
+| 10 | Asap |
+| 45 | Kabut |
+| 60 | Hujan Ringan |
+| 61 | Hujan Sedang |
+| 63 | Hujan Lebat |
+| 80 | Hujan Lokal |
+| 95 | Hujan Petir |
+| 97 | Hujan Petir |
+
+**Mapping helper (JavaScript):**
+
+```js
+const WEATHER_ICONS = {
+	0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 4: '☁️',
+	5: '🌫️', 10: '🌫️', 45: '🌫️',
+	60: '🌦️', 61: '🌧️', 63: '⛈️', 80: '🌦️',
+	95: '⛈️', 97: '⛈️',
+};
+
+function weatherIcon(code) {
+	return WEATHER_ICONS[code] ?? '❓';
+}
+```
+
+## Kode Wilayah Padang — Quick Reference
+
+### Kota Padang (adm2: `13.71`)
+
+| Kode adm3 | Kecamatan |
+|---|---|
+| `13.71.01` | Padang Barat |
+| `13.71.02` | Padang Timur |
+| `13.71.03` | Padang Utara |
+| `13.71.04` | Padang Selatan |
+| `13.71.05` | Lubuk Begalung |
+| `13.71.06` | Lubuk Kilangan |
+| `13.71.07` | Pauh |
+| `13.71.08` | Kuranji |
+| `13.71.09` | Nanggalo |
+| `13.71.10` | Bungus Teluk Kabung |
+| `13.71.11` | Koto Tangah |
+
+### Contoh Kelurahan (adm4) — Padang Barat
+
+| Kode adm4 | Kelurahan |
+|---|---|
+| `13.71.01.1001` | Belakang Tangsi |
+| `13.71.01.1002` | Berok Nipah |
+| `13.71.01.1003` | Flamboyan Baru |
+| `13.71.01.1004` | Kampung Jao |
+| `13.71.01.1005` | Kampung Pondok |
+
+<Aside type="tip" title="Referensi Lengkap">
+	Untuk daftar lengkap kode kelurahan di seluruh Padang, gunakan
+	[Data BPS Klasifikasi Wilayah](https://www.bps.go.id/id/publication/2020/04/01/15c7a05ec19abf2369a7ad12/klasifikasi-desa-perkotaan-dan-perdesaan-di-indonesia-2020--buku-2--sumatera-.html)
+	atau API turunannya. OpenPadang berencana menyediakan dataset terkurasi
+	mapping adm4 → koordinat untuk Padang (lihat
+	[Roadmap Phase 2](/roadmap/#phase-2-first-curated-dataset)).
+</Aside>
+
+## CORS
+
+Endpoint mendukung CORS (`Access-Control-Allow-Origin: *`), sehingga dapat
+dipanggil langsung dari aplikasi browser tanpa proxy server.
+
+## Refresh Rate & Caching
+
+- **Data update:** setiap 6 jam (00:00, 06:00, 12:00, 18:00 WIB)
+- **Polling lebih cepat tidak menghasilkan data baru** — data sama saja
+- **Rekomendasi caching:** cache di sisi server selama 1-2 jam
+
+## Autentikasi
+
+Tidak diperlukan. Endpoint bersifat publik tanpa API key.
+
+---
+
+## Quick Reference Summary
+
+| Aspek | Value |
+|---|---|
+| Method | GET |
+| Format | JSON |
+| Granularity | adm1 (provinsi) hingga adm4 (kelurahan) |
+| Refresh | 6 jam |
+| Forecast horizon | 3 hari, interval 3 jam |
+| CORS | Enabled |
+| Auth | None |
+| Rate limit | Tidak dipublikasikan (rekomendasi: cache 1-2 jam) |

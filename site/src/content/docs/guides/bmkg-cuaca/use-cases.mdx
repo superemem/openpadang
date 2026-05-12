@@ -1,0 +1,437 @@
+---
+title: BMKG Cuaca — Use Cases Padang
+description: 5 skenario implementasi BMKG Cuaca API untuk konteks Padang, lengkap dengan code dan preview tampilan.
+---
+
+import { Tabs, TabItem, Aside, LinkCard } from '@astrojs/starlight/components';
+
+Berikut adalah skenario implementasi nyata BMKG Cuaca API dengan fokus pada
+kebutuhan Padang dan Sumatera Barat. Setiap use case dilengkapi dengan code
+example dan preview tampilan.
+
+---
+
+## 1. Weather Widget Hyperlocal
+
+**Konteks:** Aplikasi atau website yang membutuhkan informasi cuaca presisi
+hingga level kelurahan, bukan hanya level kota.
+
+**Solusi:** Widget yang menampilkan cuaca real-time untuk satu kelurahan
+tertentu, refresh tiap 1 jam.
+
+### Preview Widget
+
+<div style="background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%); border-radius: 16px; padding: 24px; max-width: 320px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+      <div style="font-size: 12px; color: #1e40af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Padang Barat</div>
+      <div style="font-size: 14px; color: #475569; margin-top: 2px;">Belakang Tangsi</div>
+    </div>
+    <div style="font-size: 11px; color: #64748b;">12 Mei · 13:00</div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 16px; margin-top: 16px;">
+    <div style="font-size: 56px; line-height: 1;">🌦️</div>
+    <div>
+      <div style="font-size: 40px; font-weight: 700; color: #0f172a; line-height: 1;">28°</div>
+      <div style="color: #475569; font-size: 13px; margin-top: 4px;">Hujan Ringan</div>
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(15,23,42,0.08);">
+    <div>
+      <div style="font-size: 11px; color: #64748b;">Lembap</div>
+      <div style="font-size: 14px; font-weight: 600; color: #0f172a;">85%</div>
+    </div>
+    <div>
+      <div style="font-size: 11px; color: #64748b;">Angin</div>
+      <div style="font-size: 14px; font-weight: 600; color: #0f172a;">8 km/h</div>
+    </div>
+    <div>
+      <div style="font-size: 11px; color: #64748b;">Jarak Pandang</div>
+      <div style="font-size: 14px; font-weight: 600; color: #0f172a;">10 km</div>
+    </div>
+  </div>
+</div>
+
+### Implementasi
+
+```svelte
+<!-- src/lib/components/WeatherWidget.svelte -->
+<script lang="ts">
+	import { onMount } from 'svelte';
+
+	let { adm4 = '13.71.01.1001' } = $props();
+	let cuaca = $state<any>(null);
+	let lokasi = $state<any>(null);
+
+	const WEATHER_ICONS: Record<number, string> = {
+		0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 4: '☁️',
+		60: '🌦️', 61: '🌧️', 63: '⛈️', 95: '⛈️',
+	};
+
+	async function loadCuaca() {
+		const res = await fetch(`/api/cuaca/${adm4}`);
+		const data = await res.json();
+		lokasi = data.lokasi;
+		cuaca = data.data[0].cuaca[0][0];
+	}
+
+	onMount(() => {
+		loadCuaca();
+		const interval = setInterval(loadCuaca, 60 * 60 * 1000); // 1 jam
+		return () => clearInterval(interval);
+	});
+</script>
+
+{#if cuaca && lokasi}
+	<div class="rounded-2xl bg-blue-50 p-6">
+		<div class="flex items-center justify-between">
+			<div>
+				<div class="text-xs font-semibold uppercase text-blue-700">{lokasi.adm3}</div>
+				<div class="text-sm text-gray-600">{lokasi.adm4}</div>
+			</div>
+		</div>
+		<div class="mt-4 flex items-center gap-4">
+			<div class="text-5xl">{WEATHER_ICONS[cuaca.weather] ?? '🌡️'}</div>
+			<div>
+				<div class="text-4xl font-bold">{cuaca.t}°</div>
+				<div class="text-sm text-gray-600">{cuaca.weather_desc}</div>
+			</div>
+		</div>
+	</div>
+{/if}
+```
+
+---
+
+## 2. Alert Hujan Lebat untuk Aktivitas Outdoor
+
+**Konteks:** Penyelenggara event outdoor (festival, kegiatan olahraga, atau
+acara komunitas) membutuhkan early warning hujan lebat untuk pengambilan
+keputusan terkait pelaksanaan event.
+
+**Solusi:** Notifikasi yang dikirim ketika prakiraan menunjukkan hujan lebat
+(weather code ≥63 atau presipitasi ≥10mm) dalam 6 jam ke depan.
+
+### Preview Alert
+
+<div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; max-width: 380px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="display: flex; gap: 12px;">
+    <div style="font-size: 24px;">⛈️</div>
+    <div style="flex: 1;">
+      <div style="color: #991b1b; font-weight: 600; font-size: 14px;">Peringatan Hujan Lebat</div>
+      <div style="color: #b91c1c; font-size: 13px; margin-top: 4px;">Pauh, Padang · 16:00 - 19:00 WIB</div>
+      <div style="color: #475569; font-size: 12px; margin-top: 8px; line-height: 1.5;">
+        Diprediksi <strong>hujan lebat (15-20mm)</strong> dengan kemungkinan petir.
+        Pertimbangkan untuk menunda aktivitas outdoor.
+      </div>
+      <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(185,28,28,0.15); display: flex; gap: 16px; font-size: 11px; color: #64748b;">
+        <span>💧 Curah: 18mm</span>
+        <span>💨 Angin: 14 km/h</span>
+        <span>📊 Confidence: tinggi</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+### Implementasi
+
+```python
+import requests
+from datetime import datetime, timedelta
+
+ADM4 = "13.71.07.1001"  # Pauh, Padang
+HEAVY_RAIN_CODES = [63, 95, 97]  # Hujan Lebat, Hujan Petir
+
+def check_heavy_rain():
+    url = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={ADM4}"
+    data = requests.get(url).json()
+
+    # Prakiraan 6 jam ke depan (2 interval @ 3 jam)
+    forecasts = data["data"][0]["cuaca"][0][:2]
+
+    for f in forecasts:
+        if f["weather"] in HEAVY_RAIN_CODES or f["tp"] >= 10:
+            alert(f, data["lokasi"])
+
+def alert(forecast, lokasi):
+    msg = f"⛈️ Peringatan Hujan Lebat\n"
+    msg += f"{lokasi['adm3']}, {lokasi['adm2']}\n"
+    msg += f"{forecast['datetime']}: {forecast['weather_desc']}\n"
+    msg += f"Curah: {forecast['tp']}mm, Angin: {forecast['ws']} km/h"
+    # Send via Telegram / Slack / Email
+    print(msg)
+
+if __name__ == "__main__":
+    check_heavy_rain()
+```
+
+---
+
+## 3. Dashboard 3-Hari untuk Planning
+
+**Konteks:** Pengguna individual (atau tim kerja) membutuhkan gambaran cuaca
+3 hari ke depan untuk planning aktivitas mingguan.
+
+**Solusi:** Dashboard prakiraan harian dengan summary kondisi cuaca dominan
+per hari.
+
+### Preview Dashboard
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; max-width: 480px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="font-weight: 600; color: #111827; font-size: 14px; margin-bottom: 16px;">Prakiraan 3 Hari · Padang Utara</div>
+  <div style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-size: 28px;">⛅</div>
+        <div>
+          <div style="font-weight: 600; font-size: 14px; color: #111827;">Hari Ini</div>
+          <div style="font-size: 12px; color: #6b7280;">Senin, 12 Mei · Berawan</div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight: 700; font-size: 16px; color: #111827;">30° / 24°</div>
+        <div style="font-size: 11px; color: #6b7280;">💧 30%</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-size: 28px;">🌦️</div>
+        <div>
+          <div style="font-weight: 600; font-size: 14px; color: #111827;">Besok</div>
+          <div style="font-size: 12px; color: #6b7280;">Selasa, 13 Mei · Hujan Ringan</div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight: 700; font-size: 16px; color: #111827;">28° / 23°</div>
+        <div style="font-size: 11px; color: #6b7280;">💧 70%</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-size: 28px;">⛈️</div>
+        <div>
+          <div style="font-weight: 600; font-size: 14px; color: #111827;">Lusa</div>
+          <div style="font-size: 12px; color: #6b7280;">Rabu, 14 Mei · Hujan Petir</div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight: 700; font-size: 16px; color: #111827;">26° / 22°</div>
+        <div style="font-size: 11px; color: #6b7280;">💧 90%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+### Implementasi
+
+```js
+function groupByDay(forecasts) {
+	const days = {};
+	for (const f of forecasts) {
+		const day = f.local_datetime.split('T')[0]; // '2026-05-12'
+		(days[day] ??= []).push(f);
+	}
+	return days;
+}
+
+function dailySummary(dayForecasts) {
+	const temps = dayForecasts.map((f) => f.t);
+	const codes = dayForecasts.map((f) => f.weather);
+	const precip = dayForecasts.map((f) => f.tp);
+
+	// Cuaca dominan (mode)
+	const counts = {};
+	codes.forEach((c) => (counts[c] = (counts[c] ?? 0) + 1));
+	const dominantCode = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+
+	return {
+		hi: Math.max(...temps),
+		lo: Math.min(...temps),
+		weather: parseInt(dominantCode),
+		rainChance: precip.some((p) => p > 0) ? Math.max(...precip) : 0,
+	};
+}
+```
+
+---
+
+## 4. Multi-Kelurahan Heatmap Padang
+
+**Konteks:** Visualisasi geospasial cuaca di seluruh wilayah Padang untuk
+analisis pola hyperlocal atau riset urban climate.
+
+**Solusi:** Heatmap suhu/kelembapan/presipitasi yang ditampilkan pada peta
+Padang dengan data per kelurahan.
+
+### Preview Heatmap
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; max-width: 480px; font-family: -apple-system, sans-serif; margin: 1rem 0;">
+  <div style="font-weight: 600; color: #111827; font-size: 14px; margin-bottom: 12px;">Suhu Real-Time per Kelurahan</div>
+  <div style="background: #f9fafb; border-radius: 8px; padding: 16px; position: relative; min-height: 200px;">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+      <div style="background: #fed7aa; padding: 8px 10px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 10px; color: #7c2d12; font-weight: 600;">P. Utara</div>
+        <div style="font-size: 14px; font-weight: 700; color: #9a3412;">30°</div>
+      </div>
+      <div style="background: #fdba74; padding: 8px 10px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 10px; color: #7c2d12; font-weight: 600;">P. Barat</div>
+        <div style="font-size: 14px; font-weight: 700; color: #9a3412;">31°</div>
+      </div>
+      <div style="background: #fed7aa; padding: 8px 10px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 10px; color: #7c2d12; font-weight: 600;">P. Timur</div>
+        <div style="font-size: 14px; font-weight: 700; color: #9a3412;">30°</div>
+      </div>
+      <div style="background: #fef3c7; padding: 8px 10px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 10px; color: #7c2d12; font-weight: 600;">Koto Tangah</div>
+        <div style="font-size: 14px; font-weight: 700; color: #9a3412;">28°</div>
+      </div>
+      <div style="background: #fef3c7; padding: 8px 10px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 10px; color: #7c2d12; font-weight: 600;">Nanggalo</div>
+        <div style="font-size: 14px; font-weight: 700; color: #9a3412;">29°</div>
+      </div>
+      <div style="background: #fef3c7; padding: 8px 10px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 10px; color: #7c2d12; font-weight: 600;">Kuranji</div>
+        <div style="font-size: 14px; font-weight: 700; color: #9a3412;">29°</div>
+      </div>
+      <div style="background: #fde68a; padding: 8px 10px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 10px; color: #7c2d12; font-weight: 600;">L. Begalung</div>
+        <div style="font-size: 14px; font-weight: 700; color: #9a3412;">27°</div>
+      </div>
+      <div style="background: #fde68a; padding: 8px 10px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 10px; color: #7c2d12; font-weight: 600;">Pauh</div>
+        <div style="font-size: 14px; font-weight: 700; color: #9a3412;">27°</div>
+      </div>
+    </div>
+    <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 10px; color: #6b7280;">
+      <span>25°C</span>
+      <div style="flex: 1; height: 8px; margin: 4px 8px; background: linear-gradient(to right, #fef3c7, #fed7aa, #fb923c, #ea580c); border-radius: 4px;"></div>
+      <span>32°C</span>
+    </div>
+  </div>
+</div>
+
+### Implementasi
+
+```js
+const PADANG_KECAMATAN = [
+	{ name: 'Padang Barat', adm3: '13.71.01' },
+	{ name: 'Padang Timur', adm3: '13.71.02' },
+	{ name: 'Padang Utara', adm3: '13.71.03' },
+	{ name: 'Padang Selatan', adm3: '13.71.04' },
+	{ name: 'Lubuk Begalung', adm3: '13.71.05' },
+	{ name: 'Lubuk Kilangan', adm3: '13.71.06' },
+	{ name: 'Pauh', adm3: '13.71.07' },
+	{ name: 'Kuranji', adm3: '13.71.08' },
+	{ name: 'Nanggalo', adm3: '13.71.09' },
+	{ name: 'Bungus Teluk Kabung', adm3: '13.71.10' },
+	{ name: 'Koto Tangah', adm3: '13.71.11' },
+];
+
+async function loadHeatmap() {
+	const results = await Promise.all(
+		PADANG_KECAMATAN.map(async (k) => {
+			const res = await fetch(
+				`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm3=${k.adm3}`
+			);
+			const data = await res.json();
+			return { ...k, suhu: data.data[0].cuaca[0][0].t };
+		})
+	);
+	return results;
+}
+```
+
+---
+
+## 5. Indikator Kondisi Aktivitas Outdoor
+
+**Konteks:** Aplikasi atau pengguna individual membutuhkan rekomendasi
+sederhana: "Kondisi sekarang baik untuk aktivitas outdoor?"
+
+**Solusi:** Indikator 4-tier berdasarkan kombinasi cuaca, suhu, kelembapan,
+dan kecepatan angin.
+
+### Preview Indikator
+
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 1rem 0; font-family: -apple-system, sans-serif;">
+  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+      <div>
+        <div style="font-size: 13px; color: #6b7280;">Lari Pagi</div>
+        <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;">06:00 - 08:00</div>
+      </div>
+      <div style="background: #ecfdf5; color: #047857; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">Excellent</div>
+    </div>
+    <div style="font-size: 24px; font-weight: 700; color: #111827; line-height: 1;">24°</div>
+    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Cerah · Lembap 70%</div>
+  </div>
+  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+      <div>
+        <div style="font-size: 13px; color: #6b7280;">Olahraga Siang</div>
+        <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;">11:00 - 13:00</div>
+      </div>
+      <div style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">Caution</div>
+    </div>
+    <div style="font-size: 24px; font-weight: 700; color: #111827; line-height: 1;">32°</div>
+    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Cerah · Lembap 80% · UV tinggi</div>
+  </div>
+  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+      <div>
+        <div style="font-size: 13px; color: #6b7280;">Sore Outing</div>
+        <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;">16:00 - 18:00</div>
+      </div>
+      <div style="background: #fef2f2; color: #991b1b; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">Poor</div>
+    </div>
+    <div style="font-size: 24px; font-weight: 700; color: #111827; line-height: 1;">26°</div>
+    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Hujan Lebat · Angin 18 km/h</div>
+  </div>
+  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+      <div>
+        <div style="font-size: 13px; color: #6b7280;">Malam Santai</div>
+        <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;">19:00 - 21:00</div>
+      </div>
+      <div style="background: #ecfdf5; color: #047857; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">Good</div>
+    </div>
+    <div style="font-size: 24px; font-weight: 700; color: #111827; line-height: 1;">25°</div>
+    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Berawan · Lembap 75%</div>
+  </div>
+</div>
+
+### Implementasi
+
+```js
+function outdoorActivityScore(forecast) {
+	const { t, weather, hu, ws } = forecast;
+
+	// Hujan lebat/petir: tidak layak
+	if ([63, 95, 97].includes(weather)) return 'Poor';
+	// Hujan ringan-sedang
+	if ([60, 61, 80].includes(weather)) return 'Caution';
+	// Suhu tinggi + lembap = heat stress
+	if (t >= 32 && hu >= 75) return 'Caution';
+	// Angin kencang
+	if (ws >= 25) return 'Caution';
+	// Kondisi nyaman
+	if (t >= 22 && t <= 28 && weather <= 3) return 'Excellent';
+	return 'Good';
+}
+```
+
+---
+
+## Use Case Lain yang Dapat Dieksplorasi
+
+- **Smart farming** — recommend waktu penyiraman/pemupukan berdasarkan prakiraan hujan
+- **Solar panel scheduling** — optimasi penggunaan baterai berdasarkan cloud cover
+- **Wedding planner** — multi-day forecast untuk planning outdoor event
+- **Marine activity advisor** — kombinasi BMKG cuaca + InaTEWS untuk pelaut Sumbar
+- **School cancellation predictor** — alert hujan ekstrem untuk koordinasi sekolah
+
+<LinkCard
+	title="Memiliki Use Case Lain?"
+	description="Mohon laporkan melalui Issue di GitHub agar dapat ditambahkan ke katalog ini."
+	href="https://github.com/superemem/openpadang/issues/new"
+/>
