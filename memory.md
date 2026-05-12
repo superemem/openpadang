@@ -26,10 +26,18 @@
 - ✅ Initial docs disusun: plan, tech-stack, agents-skills, data-catalog, roadmap-detail
 - ✅ Git init + first commit (`8c28634`)
 - ✅ GitHub repo public: https://github.com/superemem/openpadang
+- ✅ pnpm monorepo workspace setup (commit `4b01800`)
+- ✅ `site/` Astro Starlight (build pass)
+- ✅ `app/` SvelteKit + Tailwind 4 + Lucide Svelte + Inter + Bits UI (build pass)
+- ✅ `packages/shared/` design tokens + types
+- ✅ Landing page sederhana di app/
+- ✅ LICENSE (MIT untuk code)
+- ✅ LICENSE-DATA (CC-BY 4.0 untuk data & docs)
+- ✅ CONTRIBUTING.md (panduan kontribusi)
+- ✅ README.md updated dengan link ke LICENSE & CONTRIBUTING
 - 🔲 Domain registrasi (postponed — Phase 1 atau setelah dataset pertama)
-- 🔲 SvelteKit + Tailwind + shadcn-svelte + Lucide setup
-- 🔲 Landing page sederhana
-- 🔲 Deploy ke Vercel
+- 🔲 Deploy ke Vercel (next, Emen handle sendiri)
+- 🔲 shadcn-svelte init (saat butuh component pertama)
 
 ### Decision yang sudah dibuat
 - **Brand:** OpenPadang (locked)

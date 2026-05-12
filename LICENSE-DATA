@@ -1,0 +1,50 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Copyright (c) 2026 OpenPadang contributors
+
+This data and documentation is licensed under the Creative Commons
+Attribution 4.0 International License.
+
+You are free to:
+  - Share — copy and redistribute the material in any medium or format
+  - Adapt — remix, transform, and build upon the material for any purpose,
+    even commercially.
+
+Under the following terms:
+  - Attribution — You must give appropriate credit, provide a link to the
+    license, and indicate if changes were made. You may do so in any
+    reasonable manner, but not in any way that suggests the licensor
+    endorses you or your use.
+
+Full license text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+Summary: https://creativecommons.org/licenses/by/4.0/
+
+---
+
+This CC BY 4.0 License applies to all DATA & DOCUMENTATION in this repository:
+- Curated datasets in `datasets/` (when added)
+- Data catalog documentation
+- Static site content (`site/`)
+- Project documentation in `docs/`
+
+For source CODE, please refer to LICENSE (MIT).
+
+---
+
+Attribution requirement when using OpenPadang data:
+
+  Data from OpenPadang (https://github.com/superemem/openpadang)
+  Licensed under CC BY 4.0
+
+---
+
+Note on upstream data sources:
+
+Many datasets in OpenPadang are derived from public sources (BPS, BMKG,
+OpenStreetMap, etc.) that may have their own licenses. The CC BY 4.0 license
+above applies to OpenPadang's curation, transformation, and aggregation work.
+Original source licenses are documented per-dataset in their respective
+`README.md` files.
+
+Always verify source attribution when redistributing data.

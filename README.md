@@ -41,13 +41,17 @@ Singkatnya: SvelteKit + Astro Starlight + Vercel + Supabase + GitHub. Standar te
 
 ## License
 
-- **Code:** MIT License
-- **Data:** Creative Commons Attribution 4.0 (CC-BY 4.0)
-- **Documentation:** CC-BY 4.0
+- **Code:** [MIT License](LICENSE)
+- **Data & Documentation:** [Creative Commons Attribution 4.0 (CC-BY 4.0)](LICENSE-DATA)
 
 ## Contributing
 
-Project lagi early stage. Akan dibuka untuk kontributor saat foundation selesai. Untuk feedback / saran, hubungi maintainer.
+Lihat [`CONTRIBUTING.md`](CONTRIBUTING.md) untuk panduan kontribusi.
+
+Project lagi early stage. Quick wins yang welcome:
+- Tambah data source ke `docs/04-data-catalog.md`
+- Bug report / feature request via Issue
+- Typo & docs improvement langsung PR
 
 ## Maintainer
 
