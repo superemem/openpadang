@@ -1,40 +1,82 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: OpenPadang
+description: Data publik Padang & Sumbar — terbuka, terstandar, gratis.
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
-  image:
-    file: ../../assets/houston.webp
+  tagline: |
+    Data publik Padang & Sumbar — terbuka, terstandar, gratis untuk siapa saja.
+    Bantu warga, developer, jurnalis, akademisi akses data tanpa scrape ulang.
   actions:
-    - text: Example Guide
-      link: /guides/example/
+    - text: Lihat Data Catalog
+      link: /datasets/catalog/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+      variant: primary
+    - text: GitHub
+      link: https://github.com/superemem/openpadang
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard, Badge } from '@astrojs/starlight/components';
 
-## Next steps
+## Apa Itu OpenPadang?
 
-<CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
+OpenPadang adalah **civic open data initiative independent** untuk membuka akses
+data publik Padang dan Sumatera Barat dalam format yang **machine-readable**,
+**terstandar**, dan **gratis**.
+
+Lahir dari kegelisahan: data pemerintahan saat ini **tidak lengkap, terpisah,
+dan susah diakses**.
+
+<CardGrid>
+	<Card title="Open Data" icon="document">
+		Dataset dalam CSV, JSON, GeoJSON, GTFS. License CC-BY 4.0 — bebas dipakai
+		untuk apapun selama atribusi diberikan.
 	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
+	<Card title="Real-Time API" icon="rocket">
+		Wrapper rapi untuk BMKG, PetaBencana.id, dan sumber data publik lainnya.
+		Free, no API key.
 	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	<Card title="Komplementer" icon="puzzle">
+		Bukan kompetitor Padang Mobile atau Satu Data Indonesia. OpenPadang fokus
+		ke layer publik yang machine-readable.
 	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	<Card title="Independent" icon="seti:github">
+		Project komunitas, marathon pace. Kalau maintainer pause, project tetap
+		jalan. Anyone can fork & continue.
 	</Card>
 </CardGrid>
+
+## Status Sekarang
+
+🌱 **Foundation Phase** (Mei 2026) — project lagi setup struktur dasar.
+Dataset belum di-curate, tapi catalog sumber data publik sedang disusun.
+
+<LinkCard
+	title="Lihat Roadmap"
+	description="Phased plan dari Foundation sampai Community building."
+	href="/roadmap/"
+/>
+
+## Untuk Siapa?
+
+- **Developer** — bangun aplikasi yang konsumsi data Padang tanpa scrape ulang
+- **Jurnalis** — data-driven reporting tentang Padang & Sumbar
+- **Akademisi & Mahasiswa** — sumber data untuk riset, skripsi, paper
+- **Warga** — info publik dalam format yang mudah dimengerti
+- **Civic enthusiast** — siapa pun yang peduli sama transparansi data publik
+
+## Kontribusi
+
+Project ini independent dan **welcome kontributor**. Kalau lo tau sumber data
+publik Padang/Sumbar yang belum masuk catalog, atau mau bantu kurasi dataset:
+
+<LinkCard
+	title="Cara Berkontribusi"
+	description="Tambah data source ke catalog, curate dataset, fix bug, atau improve docs."
+	href="/contributing/"
+/>
+
+---
+
+*Project ini muncul dari kegelisahan civic, bukan portfolio chase atau monetisasi.*
