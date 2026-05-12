@@ -43,9 +43,24 @@
 - ✅ Tone formal rewrite + UI mockup di use-cases BMKG Gempa (commit `d5088b5`)
 - ✅ **BMKG Cuaca Guide** — 4 page dengan UI mockup (commit `36b016e`)
 - ✅ **OSM Overpass Guide** — 4 page dengan UI mockup (commit `1d8fe0c`)
+- ✅ **Live API validation** — semua endpoint di-test, banyak fix di BMKG Cuaca (mapping kecamatan salah, adm1-3 gak work, missing fields) (commit `fc26bee`)
 - 🔲 Domain registrasi (postponed)
 - 🔲 Guide untuk source Direct API sisa: PetaBencana, OpenWeatherMap, InaTEWS
 - 🔲 First curated dataset (Phase 2): kandidat OSM POI Padang atau BPS Padang demographic
+
+## 💡 Lesson Learned (untuk Future Guides)
+
+**SELALU TEST API LIVE sebelum publish documentation.** Dokumentasi BMKG
+publik tidak akurat — gue tulis guide berdasarkan asumsi mapping kecamatan
+dan parameter level, ternyata setelah test live: hampir semua mapping
+kecamatan salah + adm1/adm2/adm3 gak work (return HTML).
+
+Workflow untuk guide berikutnya:
+1. Hit endpoint live dengan curl/python dulu
+2. Verify response schema match documentation source
+3. Test edge cases (empty result, error response, parameter variants)
+4. Tulis guide berdasarkan observasi aktual, bukan dokumentasi source
+5. Tambah disclaimer "Last verified: <date>" + link ke validation test
 
 ### Decision yang sudah dibuat
 - **Brand:** OpenPadang (locked)
