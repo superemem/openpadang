@@ -12,12 +12,17 @@ import { Aside, Steps, Tabs, TabItem, Badge, LinkCard } from '@astrojs/starlight
 
 ## Apa yang Akan Diperoleh
 
-API BMKG menyediakan 3 endpoint JSON untuk data gempa Indonesia (termasuk
-wilayah Sumatera Barat):
+BMKG menyediakan beberapa endpoint untuk data gempa Indonesia:
 
+**Endpoint Resmi (data.bmkg.go.id):**
 - **Gempa terbaru** — gempa paling baru dengan latency sekitar 6 detik
-- **15 gempa terakhir** — riwayat gempa untuk dashboard atau analisis
+- **15 gempa terakhir** — riwayat gempa M5+ untuk dashboard
 - **Gempa dirasakan warga** — gempa yang dilaporkan dirasakan masyarakat
+
+**Endpoint InaTEWS (bmkg-content-inatews.storage.googleapis.com):** ⭐
+- **`live30event.xml`** — hingga **~200 events** dengan magnitude minimum **M2.0**
+  (jauh lebih comprehensive dibanding endpoint resmi)
+- **`indo_faults_lines.geojson`** — data patahan/sesar Indonesia untuk visualisasi
 
 Seluruh data merupakan **public domain** (data pemerintah) dan dapat digunakan
 untuk berbagai keperluan: aplikasi, dashboard, sistem alert, riset akademik,
@@ -140,7 +145,7 @@ function isPadangSumbar(gempa) {
 
 <LinkCard
 	title="Reference Endpoint Lengkap"
-	description="Dokumentasi 3 endpoint BMKG: autogempa, gempaterkini, gempadirasakan"
+	description="3 endpoint resmi + 2 hidden gems (live30event 200 events, fault lines GeoJSON)"
 	href="/guides/bmkg-gempa/endpoints/"
 />
 

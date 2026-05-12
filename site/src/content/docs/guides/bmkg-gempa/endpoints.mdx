@@ -138,21 +138,153 @@ yang berisi skala MMI dan lokasi:
 
 ---
 
-## Endpoint Pendukung
+## 💎 Endpoint Hidden Gems (Tidak Terdokumentasi Resmi)
 
-BMKG juga menyediakan beberapa endpoint tambahan yang kurang
-terdokumentasikan namun bermanfaat:
+Selain 3 endpoint utama, BMKG memiliki **endpoint internal di Google Cloud
+Storage** yang menyediakan data jauh lebih komprehensif. Endpoint ini
+dipakai oleh aplikasi internal InaTEWS namun dapat diakses publik.
 
-| Endpoint | Tujuan |
+### 🌍 `live30event.xml` — 194 Events Real-Time
+
+<Badge text="Tested & Verified" variant="success" />
+
+**Endpoint:**
+```
+GET https://bmkg-content-inatews.storage.googleapis.com/live30event.xml
+```
+
+**Refresh:** Real-time (mendekati 1-2 menit latency)
+**Returns:** Hingga ~200 events terbaru (nama "live30" misleading)
+**Coverage:** Seluruh Indonesia
+**Format:** XML
+
+**Keunggulan vs `gempaterkini.json`:**
+
+| Aspek | `gempaterkini.json` | `live30event.xml` |
+|---|---|---|
+| Jumlah events | 15 | **~200** (10-12x lebih banyak) |
+| Magnitude minimum | M5+ | **M2.0+** |
+| Event ID unique | Tidak ada | ✅ `<eventid>` untuk dedup |
+| Status (confirmed/prelim) | Tidak ada | ✅ `<status>` |
+| Focal mechanism | Tidak ada | ✅ `<fokal>` |
+| Time precision | Detik | **Millisecond** |
+| Format | JSON | XML |
+
+**Response Schema:**
+
+```xml
+<?xml version="1.0"?>
+<Infogempa>
+ <gempa>
+  <eventid>bmg2026jgpg</eventid>
+  <status>confirmed</status>
+  <waktu>2026/05/12  16:20:05.389</waktu>
+  <lintang>-8.35</lintang>
+  <bujur>116.16</bujur>
+  <dalam>15</dalam>
+  <mag>2.6</mag>
+  <fokal>undetermined</fokal>
+  <area>Sumbawa Region, Indonesia</area>
+ </gempa>
+ <!-- ~200 entries... -->
+</Infogempa>
+```
+
+**Field reference:**
+
+| Field | Type | Deskripsi |
+|---|---|---|
+| `eventid` | string | Unique ID BMKG, format `bmg{YYYY}{xxxx}` |
+| `status` | string | `confirmed` atau `preliminary` |
+| `waktu` | string | UTC datetime dengan millisecond `YYYY/MM/DD HH:MM:SS.SSS` |
+| `lintang` | number | Latitude (negative = LS) |
+| `bujur` | number | Longitude (negative = BB) |
+| `dalam` | number | Kedalaman km |
+| `mag` | number | Magnitude |
+| `fokal` | string | Focal mechanism (`undetermined`, `normal`, `thrust`, `strike-slip`) |
+| `area` | string | Wilayah dalam Bahasa Inggris |
+
+<Aside type="tip" title="Recommended untuk Disaster Monitoring">
+	Untuk app monitoring gempa Padang/Sumbar dengan threshold M2+, endpoint
+	ini jauh lebih useful dibanding `gempaterkini.json` (yang cuma M5+).
+	Bisa filter realtime per region menggunakan field `area`.
+</Aside>
+
+### 🗺️ `indo_faults_lines.geojson` — Patahan/Sesar Indonesia
+
+<Badge text="Visualization Data" variant="caution" />
+
+**Endpoint:**
+```
+GET https://bmkg-content-inatews.storage.googleapis.com/indo_faults_lines.geojson
+```
+
+**Size:** ~310 KB
+**Format:** GeoJSON FeatureCollection (LineString)
+
+Data fault lines (garis patahan) Indonesia untuk visualisasi geospasial.
+Critical untuk:
+
+- Map app yang tampilin gempa di context fault zone
+- Educational visualization tentang seismic risk
+- Tsunami risk analysis (gempa dekat fault offshore = risk tinggi)
+- Layer reference untuk Padang yang berada di **Sumatera Megathrust zone**
+
+**Response Schema:**
+
+```json
+{
+  "type": "FeatureCollection",
+  "name": "indo_faults_lines",
+  "crs": { "type": "name", "properties": { "name": "..." } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Primary ID": "",
+        "Secondary ID": "rank 1"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [ 105.203723, -5.328199 ],
+          [ 105.292491, -5.466554 ]
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Use case Padang/Sumbar:**
+
+Filter fault lines yang relevan untuk Padang (bbox approximate):
+
+```js
+function isPadangArea(feature) {
+	const coords = feature.geometry.coordinates;
+	return coords.some(([lon, lat]) => 
+		lon >= 99 && lon <= 102 && lat >= -3.5 && lat <= 0.5
+	);
+}
+
+const padangFaults = data.features.filter(isPadangArea);
+```
+
+## Endpoint Lainnya (Limited)
+
+| Endpoint | Status |
 |---|---|
-| `https://data.bmkg.go.id/datamkg/TEWS/data.xml` | XML feed (alternatif JSON) |
-| `https://inatews.bmkg.go.id/...` | Tsunami warning system |
-| `https://repogempa.bmkg.go.id/` | Repositori gempa historis lengkap |
+| `https://repogempa.bmkg.go.id/eventcatalog` | Web UI only — tidak ada public API. Untuk request bulk historical, harus submit form via web. |
+| `https://inatews.bmkg.go.id/web/realtime` | Web portal real-time |
+| `https://rtsp.bmkg.go.id/` | InaTEWS portal (membutuhkan login) |
+| `https://api.bmkg.go.id/publik/gempa-*` | ❌ Tidak ada (hanya cuaca yang punya endpoint `/publik`) |
 
-<Aside type="caution" title="Stabilitas">
-	Endpoint XML dan repogempa dapat berubah tanpa notifikasi. Untuk
-	implementasi production, sebaiknya menggunakan 3 endpoint JSON utama
-	di atas.
+<Aside type="caution" title="Stabilitas Hidden Endpoints">
+	Endpoint di Google Cloud Storage (`bmkg-content-inatews.storage.googleapis.com`)
+	tidak terdokumentasi resmi. BMKG dapat mengubah URL atau format tanpa
+	notifikasi. Untuk production, **monitor field schema secara berkala**
+	dan implement defensive parsing.
 </Aside>
 
 ## CORS
@@ -178,8 +310,10 @@ Tidak diperlukan. Seluruh endpoint bersifat publik tanpa API key.
 
 ## Quick Reference
 
-| Endpoint | Refresh | Returns | Use Case |
-|---|---|---|---|
-| `autogempa.json` | ~6 detik | 1 gempa terbaru | Real-time alert |
-| `gempaterkini.json` | ~5 menit | 15 gempa terbaru | Dashboard, history |
-| `gempadirasakan.json` | Variabel | 15 dirasakan warga | Analisis dampak komunitas |
+| Endpoint | Refresh | Returns | Min Magnitude | Use Case |
+|---|---|---|---|---|
+| `autogempa.json` | ~6 detik | 1 gempa terbaru | M2+ | Real-time alert latest |
+| `gempaterkini.json` | ~5 menit | 15 events | **M5+** | Dashboard major events |
+| `gempadirasakan.json` | Variabel | 15 dirasakan warga | varies | Analisis dampak komunitas |
+| **`live30event.xml`** ⭐ | ~1-2 menit | **~200 events** | **M2.0+** | **Monitoring comprehensive** |
+| `indo_faults_lines.geojson` | Statis | Fault lines GeoJSON | — | Map visualization |
