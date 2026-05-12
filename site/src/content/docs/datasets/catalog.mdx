@@ -1,0 +1,188 @@
+---
+title: Sumber Data Publik Padang & Sumbar
+description: Inventory sumber data publik untuk Padang dan Sumatera Barat — tier 1 sampai 3 berdasarkan effort & accessibility.
+---
+
+import { Badge, Card, CardGrid } from '@astrojs/starlight/components';
+
+> **Status:** Catalog sedang disusun. Sumber di bawah ini sebagian belum
+> di-validate. Update terakhir: Mei 2026.
+
+OpenPadang inventarisasi sumber data publik tentang Padang & Sumbar.
+Tujuannya: **single source of truth** untuk siapa pun yang butuh data — gak
+perlu cari ke 10 tempat berbeda.
+
+---
+
+## 🟢 Tier 1: API Real-Time + FREE
+
+Langsung jalan, no partnership. Cocok untuk eksperimen cepat.
+
+### OpenStreetMap (OSM) — Overpass API
+
+<Badge text="Top Priority" variant="success" />
+
+- **Source:** [overpass-turbo.eu](https://overpass-turbo.eu/)
+- **Format:** GeoJSON (via Overpass API)
+- **License:** ODbL (Open Database License)
+- **Refresh:** Real-time community-edited
+- **Coverage:** POI, building, road, fasilitas publik Padang
+
+**Use case:** POI Padang (resto, masjid, sekolah, halte, ATM), batas
+administratif, road network, building footprints.
+
+### BMKG Gempa Real-Time
+
+- **Source:** [data.bmkg.go.id/DataMKG/TEWS/autogempa.json](https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json)
+- **Format:** JSON
+- **License:** Public domain (gov data)
+- **Refresh:** 6 detik latency
+- **Coverage:** Seluruh Indonesia (filter Sumbar di sisi client)
+
+**Other endpoints:**
+
+- `gempaterkini.json` — 15 gempa terakhir
+- `gempadirasakan.json` — gempa yang dirasakan warga
+
+### InaTEWS BMKG (Tsunami Early Warning)
+
+- **Source:** [inatews.bmkg.go.id](https://inatews.bmkg.go.id/)
+- **Format:** XML / web scrape
+- **Refresh:** Real-time
+- **Coverage:** Indonesia tsunami warning
+
+**Note:** Critical untuk Padang yang tsunami-prone.
+
+### PetaBencana.id
+
+- **Source:** [petabencana.id](https://petabencana.id)
+- **Format:** REST API + GeoJSON
+- **License:** Open-source (CC)
+- **Refresh:** Real-time crowd-source
+- **Coverage:** Multi-bencana, multi-kota Indonesia (filter Sumbar)
+
+### OpenWeatherMap
+
+- **Source:** [openweathermap.org/api](https://openweathermap.org/api)
+- **Format:** JSON REST
+- **License:** Free tier API (1000 calls/day)
+- **Refresh:** 1 jam (free tier)
+- **Coverage:** Global, support Padang
+
+### BMKG Cuaca Prakiraan
+
+- **Source:** `api.bmkg.go.id/publik/prakiraan-cuaca?adm4=<kode>`
+- **Format:** JSON
+- **Refresh:** 6 jam
+- **Coverage:** Per kelurahan dengan kode adm4
+
+---
+
+## 🟡 Tier 2: Stale Tapi Reliable
+
+Perlu scrape, update periodic (tahunan/bulanan).
+
+### BPS Kota Padang
+
+<Badge text="High Priority" variant="caution" />
+
+- **Source:** [padangkota.bps.go.id](https://padangkota.bps.go.id/)
+- **Format:** Web table, PDF
+- **License:** Government open data
+- **Refresh:** Tahunan
+
+**Dataset prioritas:** Penduduk per kecamatan, distribusi umur, sex ratio,
+kepadatan, statistik ekonomi.
+
+### BPS Sumatera Barat
+
+- **Source:** [sumbar.bps.go.id](https://sumbar.bps.go.id/)
+- **Format:** Web table, PDF
+- **Refresh:** Tahunan
+
+### Geoportal Sumbar
+
+- **Source:** [geoportal.sumbarprov.go.id](https://geoportal.sumbarprov.go.id/)
+- **Format:** Shapefile, GeoJSON, WMS (GeoNode)
+- **Status:** Perlu register account
+
+### Portal Data Sumbar
+
+- **Source:** [data.sumbarprov.go.id](https://data.sumbarprov.go.id/)
+- **Status:** Belum di-eksplor
+
+### Satu Data Indonesia
+
+- **Source:** [data.go.id](https://data.go.id/)
+- **Coverage:** Filter "Sumatera Barat" / "Padang"
+
+### Jadesta Sumbar (Desa Wisata)
+
+- **Source:** [sumbar.jadesta.com](https://sumbar.jadesta.com/)
+- **Coverage:** Desa wisata Sumbar
+
+### Satu Data Kemenparekraf
+
+- **Source:** [satudata.kemenparekraf.go.id](https://satudata.kemenparekraf.go.id/)
+- **Coverage:** Tourism + ekonomi kreatif Sumbar
+
+---
+
+## 🔴 Tier 3: Butuh Partnership
+
+Belum publik, butuh permintaan resmi atau partnership.
+
+### Trans Padang GPS Real-Time
+
+- **Source:** Padang Mobile / Dishub Kota Padang
+- **Status:** Need partnership
+
+### Data Shelter ZMS (Zona Aman Tsunami)
+
+- **Source:** BPBD Sumbar / Pemkot Padang
+- **Status:** Need partnership
+
+### Faskes & Puskesmas Padang
+
+- **Source:** Dinkes Padang / Kemenkes SatuSehat
+
+### KPU (Election Data)
+
+- **Source:** [data.kpu.go.id](https://data.kpu.go.id/)
+- **Coverage:** Pilkada/Pemilu Sumbar
+
+---
+
+## 💎 Hidden Gems
+
+### Media Lokal
+
+- padang.go.id (berita Pemkot)
+- InfoSumbar
+- Padek.jawapos.com
+- TribunPadang
+
+### Universitas (Skripsi & Riset)
+
+- **UNAND eskripsi** — banyak riset Trans Padang, banjir, dll
+- **UNP repository** — skripsi mahasiswa
+
+---
+
+## 📊 Total Inventory
+
+| Tier | Sumber | Effort |
+|---|---|---|
+| Tier 1 (Free + API) | 6 | LOW |
+| Tier 2 (Scrape) | 7 | MEDIUM |
+| Tier 3 (Partnership) | 4 | HIGH |
+| Hidden Gems | 6+ | VARIES |
+| **TOTAL** | **23+** | |
+
+---
+
+## Kontribusi
+
+Tahu sumber data publik Padang/Sumbar yang belum masuk catalog?
+[Open Issue di GitHub](https://github.com/superemem/openpadang/issues/new) atau
+langsung PR ke [`docs/04-data-catalog.md`](https://github.com/superemem/openpadang/blob/main/docs/04-data-catalog.md).

@@ -4,21 +4,35 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://openpadang.info',
 	integrations: [
 		starlight({
-			title: 'My Docs',
-			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/withastro/starlight' }],
+			title: 'OpenPadang',
+			description:
+				'Data publik Padang & Sumbar — terbuka, terstandar, gratis untuk siapa saja.',
+			social: [
+				{
+					icon: 'github',
+					label: 'GitHub',
+					href: 'https://github.com/superemem/openpadang',
+				},
+			],
+			editLink: {
+				baseUrl: 'https://github.com/superemem/openpadang/edit/main/site/',
+			},
+			lastUpdated: true,
 			sidebar: [
 				{
-					label: 'Guides',
-					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', slug: 'guides/example' },
-					],
+					label: 'Mulai',
+					items: [{ label: 'Roadmap', slug: 'roadmap' }],
 				},
 				{
-					label: 'Reference',
-					items: [{ autogenerate: { directory: 'reference' } }],
+					label: 'Data Catalog',
+					items: [{ label: 'Sumber Data Publik', slug: 'datasets/catalog' }],
+				},
+				{
+					label: 'Kontribusi',
+					items: [{ label: 'Cara Berkontribusi', slug: 'contributing' }],
 				},
 			],
 		}),

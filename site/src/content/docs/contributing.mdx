@@ -1,0 +1,130 @@
+---
+title: Cara Berkontribusi
+description: Panduan kontribusi ke OpenPadang — tambah data source, curate dataset, fix bug, atau improve docs.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Makasih udah mau lihat-lihat OpenPadang! Kontribusi welcome dari siapa pun
+— gak perlu jadi expert, kontribusi kecil pun valuable.
+
+## 📋 Scope Project
+
+OpenPadang fokus ke:
+
+- **Data publik Padang & Sumbar** (terutama yang gak ada API resmi atau formatnya gak machine-readable)
+- **Standardisasi** ke format umum: CSV, JSON, GeoJSON, GTFS
+- **Open license:** data CC-BY 4.0, code MIT
+- **Komplementer** ke layanan resmi Pemkot (Padang Mobile, dll), bukan kompetitor
+
+## 🤝 Cara Kontribusi
+
+<CardGrid>
+	<Card title="Tambah Data Source" icon="add-document">
+		Tahu sumber data publik Padang/Sumbar yang belum masuk catalog? Tambah
+		entry-nya. Effort: ~15 menit.
+	</Card>
+	<Card title="Curate Dataset" icon="document">
+		Bantu transform sumber jadi dataset terkurasi (CSV/JSON/GeoJSON/GTFS).
+		Effort: 1-3 weekend.
+	</Card>
+	<Card title="Bug Reports" icon="warning">
+		Open Issue dengan steps to reproduce. Atau fix sendiri via PR.
+	</Card>
+	<Card title="Documentation" icon="pencil">
+		Typo, clarification, contoh tambahan. Langsung PR, no Issue needed.
+	</Card>
+</CardGrid>
+
+## 🛠️ Setup Development Local
+
+**Prerequisite:**
+
+- Node.js ≥20
+- pnpm ≥9 (wajib, bukan npm/yarn)
+
+```bash
+# Clone repo
+git clone https://github.com/superemem/openpadang.git
+cd openpadang
+
+# Install dependencies
+pnpm install
+
+# Run docs site (Astro Starlight)
+pnpm dev:site
+# → http://localhost:4321
+
+# Run app (SvelteKit)
+pnpm dev:app
+# → http://localhost:5173
+
+# Build all
+pnpm build
+```
+
+## 🎨 Standards
+
+### Code Style
+
+- TypeScript strict mode
+- Prettier + ESLint (per project)
+- Naming convention:
+  - Folder: `kebab-case`
+  - Branch: `feat/`, `fix/`, `docs/`, `chore/` prefix
+
+### Commit Messages
+
+Conventional Commits:
+
+- `feat:` — new feature
+- `fix:` — bug fix
+- `docs:` — documentation
+- `chore:` — maintenance
+- `refactor:` — code refactor
+
+### Dataset Standards
+
+- **Format:** prefer CSV (RFC 4180), JSON (with JSON Schema), GeoJSON, GTFS
+- **License:** must be compatible with CC-BY 4.0
+- **Schema:** document fields, types, units di dataset README
+- **PII:** wajib di-scan & di-scrub sebelum publish
+
+## 📜 License
+
+By contributing, you agree:
+
+- **Code contributions** licensed under **MIT** ([LICENSE](https://github.com/superemem/openpadang/blob/main/LICENSE))
+- **Data & documentation contributions** licensed under **CC-BY 4.0** ([LICENSE-DATA](https://github.com/superemem/openpadang/blob/main/LICENSE-DATA))
+
+## 🙏 Code of Conduct
+
+- **Be kind.** Diskusi respectful walaupun gak setuju.
+- **Be patient.** Maintainer & contributor sebagian besar relawan.
+- **Be honest.** Kasih credit yang seharusnya.
+- **No spam, no harassment, no discrimination.**
+
+## 📬 Kontak
+
+<LinkCard
+	title="Buka Issue di GitHub"
+	description="Diskusi feature, bug report, atau tanya-tanya."
+	href="https://github.com/superemem/openpadang/issues"
+/>
+
+<LinkCard
+	title="Maintainer"
+	description="@superemem (Muhammad Irfan Mursyidin)"
+	href="https://github.com/superemem"
+/>
+
+---
+
+## 💡 Insight Buat Kontributor Baru
+
+- Gak perlu lo expert — kontribusi kecil (typo fix, tambah 1 data source) tetep valuable
+- Diskusi di Issue dulu kalau scope besar, biar gak waste effort
+- Marathon, bukan sprint — kontribusi 1 dataset per bulan udah luar biasa
+- Project independent — kalau eventually lo mau fork & continue versi sendiri, silakan
+
+Makasih udah peduli sama data publik Padang & Sumbar! 🌱

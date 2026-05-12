@@ -1,0 +1,109 @@
+---
+title: Roadmap
+description: Phased roadmap OpenPadang dari Foundation Setup sampai Community building.
+---
+
+OpenPadang dibangun **marathon, bukan sprint**. Roadmap di bawah adalah panduan,
+bukan deadline ketat. Capek istirahat. Skip phase yang gak mood.
+
+## 🎯 Phase 0: Foundation Setup — IN PROGRESS
+
+**Goal:** Project online dengan landing page minimal. Bisa pause kapan aja
+setelah ini tanpa rusak.
+
+- ✅ Folder structure + project docs
+- ✅ Git + GitHub repo public
+- ✅ pnpm monorepo (site/, app/, packages/shared/)
+- ✅ Astro Starlight site (this docs)
+- ✅ SvelteKit app skeleton
+- ✅ Design tokens, Tailwind 4, Lucide, Inter
+- ✅ LICENSE (MIT + CC-BY 4.0) + CONTRIBUTING.md
+- 🔲 Vercel deployment
+
+## 📊 Phase 1: Catalog & Documentation
+
+**Goal:** Static documentation site dengan catalog 20+ data sources
+terdokumentasi rapi.
+
+- Lengkapi Data Catalog dengan minimal 20 sumber publik
+- Per source: URL, format, license, refresh rate, contact, reliability
+- Page detail per source
+- A11y + Lighthouse mobile audit
+- Soft announcement publik
+
+## 🌍 Phase 2: First Curated Dataset
+
+**Goal:** 1 dataset production-ready, accessible via GitHub raw + dokumentasi
+lengkap.
+
+**Kandidat starter (lowest hanging fruit):**
+
+- OSM POI Padang (1 query Overpass API → JSON)
+- BMKG real-time wrapper
+- BPS Padang demographic time-series
+
+## ⚡ Phase 3: Showcase — Padang Real-Time Status PWA
+
+**Goal:** Live PWA yang konsumsi data publik (BMKG, PetaBencana, OWM) — bukti
+konkret value Open Data.
+
+Fitur planned:
+
+- Gempa real-time + tsunami warning
+- Cuaca + AQI per area
+- Banjir crowd-source dari PetaBencana
+- Map view dengan Leaflet
+- PWA installable + offline-cache
+- Web Push notification untuk gempa M≥5 Sumbar
+
+## 🔌 Phase 4: API Gateway
+
+**Goal:** REST API publik dengan dokumentasi OpenAPI 3.0.
+
+- SvelteKit `+server.ts` endpoints
+- Interactive API docs (Swagger UI / Scalar)
+- Rate limiting + caching
+- Code examples (cURL, JS, Python)
+
+## 📈 Phase 5: Visualization & Data Stories
+
+**Goal:** Dashboard publik + data journalism.
+
+**Ide story:**
+
+- "Demografi Padang Visualized" (BPS data)
+- "Mengapa Lubuk Buaya Banjir?" (geo + historical)
+- "Trans Padang Koridor Mana Paling Sepi?" (kalau dapet data)
+
+## 🌐 Phase 6: Outreach & Community
+
+**Goal:** Project gak solo lagi. Ada kontributor, partnership, recognition.
+
+- Surat resmi ke Diskominfo Padang
+- Approach UNAND/UNP — kolaborasi research
+- Submit ke DataPortals.org
+- Article LinkedIn/Twitter
+- Hackathon partnership
+
+---
+
+## Total Timeline (Estimate)
+
+| Phase | Effort | Cumulative |
+|---|---|---|
+| Phase 0 | 12-16 jam | Week 1-2 |
+| Phase 1 | 16-20 jam | Week 3-5 |
+| Phase 2 | 20-30 jam | Week 6-9 |
+| Phase 3 | 20-30 jam | Week 10-13 |
+| Phase 4 | 10-16 jam | Week 14-15 |
+| Phase 5+ | Ongoing | Month 4+ |
+| Phase 6+ | Ongoing | Month 6+ |
+
+**Foundation (Phase 0-4):** ~3-4 bulan @ 4-6 jam/minggu (sustainable solo).
+
+Phase 5+ ongoing — kapan mood. No deadline.
+
+---
+
+*Detail step-by-step roadmap untuk maintainer ada di repo:
+[`docs/05-roadmap-detail.md`](https://github.com/superemem/openpadang/blob/main/docs/05-roadmap-detail.md).*
