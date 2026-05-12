@@ -31,6 +31,21 @@ export default defineConfig({
 					items: [{ label: 'Sumber Data Publik', slug: 'datasets/catalog' }],
 				},
 				{
+					label: 'Guides',
+					items: [
+						{
+							label: 'BMKG Gempa Real-Time',
+							collapsed: false,
+							items: [
+								{ label: 'Quick Start', slug: 'guides/bmkg-gempa/quickstart' },
+								{ label: 'Endpoint Reference', slug: 'guides/bmkg-gempa/endpoints' },
+								{ label: 'Use Cases Padang', slug: 'guides/bmkg-gempa/use-cases' },
+								{ label: 'Gotchas & Limitations', slug: 'guides/bmkg-gempa/gotchas' },
+							],
+						},
+					],
+				},
+				{
 					label: 'Kontribusi',
 					items: [{ label: 'Cara Berkontribusi', slug: 'contributing' }],
 				},

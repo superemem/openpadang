@@ -1,0 +1,216 @@
+---
+title: BMKG Gempa — Gotchas & Limitations
+description: Pitfalls, field quirks, rate limit, dan common errors yang sering ditemui pakai BMKG Gempa API.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+BMKG API simple tapi punya quirks. List ini hasil observasi & komunitas — worth
+tau sebelum lo deploy ke production.
+
+## ⚠️ Timezone Trap
+
+Field `DateTime` udah ISO 8601 UTC (`...+00:00`). Tapi `Tanggal` + `Jam`
+**display dalam WIB** (UTC+7). Jangan campur dua-duanya.
+
+```js
+// ❌ SALAH: parse Jam pakai library timezone, lupa pisah dengan DateTime
+const time = new Date(`${gempa.Tanggal} ${gempa.Jam}`); // ambigu
+
+// ✅ BENAR: pakai DateTime yang udah ISO
+const time = new Date(gempa.DateTime); // jelas UTC
+// Display ke user pakai toLocaleString dengan timezone 'Asia/Jakarta'
+const display = time.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+```
+
+## ⚠️ Field `Magnitude` itu STRING bukan Number
+
+Format response BMKG, semua field **string** (termasuk angka).
+
+```js
+// ❌ SALAH: compare langsung
+if (gempa.Magnitude >= 5) // "5.4" >= 5 → coercion behaviour
+
+// ✅ BENAR: convert dulu
+if (parseFloat(gempa.Magnitude) >= 5) // explicit
+```
+
+## ⚠️ Field `Coordinates` Format
+
+Format: `"lat,lng"` sebagai string (dipisah koma, no space). Tapi `Lintang` &
+`Bujur` punya format display (`"0.95 LS"` / `"0.95 LU"`).
+
+```js
+// Cara aman parse coordinates
+const [lat, lng] = gempa.Coordinates.split(',').map(parseFloat);
+
+// Atau dari Lintang/Bujur (lebih rumit)
+function parseLintang(str) {
+	const [val, dir] = str.split(' ');
+	return parseFloat(val) * (dir === 'LS' ? -1 : 1);
+}
+```
+
+## ⚠️ Field `Dirasakan` & `Shakemap` Tidak Selalu Ada
+
+- `Dirasakan` cuma ada kalau **udah ada laporan warga** (biasanya 5-15 menit
+  setelah gempa)
+- `Shakemap` cuma ada kalau **gempa cukup besar** untuk di-generate shakemap
+
+```js
+// ❌ SALAH: assume ada
+const dirasakan = gempa.Dirasakan; // bisa undefined
+
+// ✅ BENAR: optional handling
+const dirasakan = gempa.Dirasakan ?? 'Belum ada laporan';
+const shakemapUrl = gempa.Shakemap
+	? `https://data.bmkg.go.id/DataMKG/TEWS/${gempa.Shakemap}`
+	: null;
+```
+
+## ⚠️ `Wilayah` Format Inkonsisten
+
+Format `Wilayah` campur uppercase / mixed case / abbreviation:
+- `"21 km BaratLaut KOTAPADANG-SUMBAR"` (compound, no spaces)
+- `"95 km Tenggara MENTAWAI-SUMBAR"` (normal)
+- `"Laut Sumatera Barat"` (descriptive)
+
+Untuk filter, **normalize dulu**:
+
+```js
+function normalizeWilayah(s) {
+	return s
+		.toUpperCase()
+		.replace(/\s+/g, ' ')
+		.replace(/-/g, ' ')
+		.trim();
+}
+
+const isPadang = (g) =>
+	normalizeWilayah(g.Wilayah).includes('PADANG');
+```
+
+## ⚠️ `gempaterkini.json` Bisa Out-of-Order
+
+Walau biasanya sorted by time DESC, kadang ada gempa baru yang masuk **di
+tengah array** (data correction). Selalu **sort by `DateTime`** kalau urutan
+matter.
+
+```js
+const sorted = data.Infogempa.gempa.sort(
+	(a, b) => new Date(b.DateTime) - new Date(a.DateTime)
+);
+```
+
+## ⚠️ Rate Limiting
+
+BMKG tidak publish rate limit resmi, tapi observasi:
+- **Polling < 1 detik** → berisiko 429 / IP block
+- **Polling 5-10 detik** → aman tapi waste resource
+- **Polling 30 detik** → rekomendasi untuk production
+
+**Caching strategy:**
+
+```js
+// Server-side cache (Vercel Edge / Cloudflare Workers)
+let cache = { data: null, expires: 0 };
+
+export async function GET() {
+	if (Date.now() < cache.expires && cache.data) {
+		return json(cache.data);
+	}
+
+	const res = await fetch('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json');
+	const data = await res.json();
+
+	cache = { data, expires: Date.now() + 30_000 }; // 30s
+	return json(data);
+}
+```
+
+## ⚠️ "Potensi" Field Bahasa Indonesia
+
+Field `Potensi` selalu Indonesian text:
+- `"Tidak berpotensi tsunami"` (paling sering)
+- `"Berpotensi tsunami"` ← CRITICAL
+- `"Berpotensi tsunami untuk wilayah XXX"` ← specific area
+
+Untuk programmatic check tsunami:
+
+```js
+const isTsunamiPotential = (g) =>
+	g.Potensi.toLowerCase().includes('berpotensi tsunami') &&
+	!g.Potensi.toLowerCase().startsWith('tidak');
+```
+
+## ⚠️ Outage / Maintenance
+
+BMKG kadang maintenance (biasanya off-hours WIB). Endpoint bisa return:
+- HTTP 503 (service unavailable)
+- HTML error page (bukan JSON)
+- Empty response
+
+**Defensive coding:**
+
+```js
+try {
+	const res = await fetch('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json');
+
+	if (!res.ok) {
+		throw new Error(`HTTP ${res.status}`);
+	}
+
+	const contentType = res.headers.get('content-type');
+	if (!contentType?.includes('json')) {
+		throw new Error('Unexpected content type');
+	}
+
+	const data = await res.json();
+	if (!data?.Infogempa?.gempa) {
+		throw new Error('Unexpected schema');
+	}
+
+	return data.Infogempa.gempa;
+} catch (err) {
+	console.error('BMKG fetch failed:', err);
+	// Fallback: gunakan cache lama atau warning user
+	return null;
+}
+```
+
+## ⚠️ Tidak Ada Webhook / Push Notification
+
+BMKG **tidak provide webhook** atau push notif resmi. Lo harus **polling**.
+
+Untuk near-real-time:
+- Polling 30s (acceptable untuk most cases)
+- Polling 6s = mengikuti latency BMKG (waste resource)
+- Server-sent Events / WebSocket → BMKG tidak support
+
+Alternatif: pakai **Twitter API** ke akun `@infoBMKG` untuk push trigger.
+
+---
+
+## Limitations OpenPadang Highlight
+
+| Limitation | Workaround |
+|---|---|
+| Tidak ada API key / auth | Tidak ada (BMKG niat publik free) |
+| Tidak ada webhook | Polling 30s |
+| Schema bisa berubah tanpa notice | Defensive parsing, tracking di `last verified` date |
+| Coverage hanya Indonesia | OK untuk Padang use case |
+| Magnitude < 4 mungkin filtered | Cek `gempadirasakan.json` untuk yang kecil dirasakan |
+| Historical > 1 bulan susah | Pakai `repogempa.bmkg.go.id` (less stable) |
+
+## Reporting Issue ke BMKG
+
+Kalau lo nemu bug data BMKG (bukan API):
+- Email: data@bmkg.go.id
+- Twitter: [@infoBMKG](https://twitter.com/infoBMKG)
+- Hotline: 196
+
+<Aside type="note">
+	**Last verified:** Mei 2026. Quirks bisa berubah seiring update BMKG. Kalau
+	lo nemu inconsistency baru, [report di GitHub
+	Issue](https://github.com/superemem/openpadang/issues).
+</Aside>

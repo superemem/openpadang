@@ -1,0 +1,199 @@
+---
+title: BMKG Gempa — Use Cases Padang
+description: 5 skenario nyata pakai BMKG Gempa API untuk konteks Padang & Sumbar.
+---
+
+import { Tabs, TabItem, Aside, LinkCard } from '@astrojs/starlight/components';
+
+Skenario real yang lo bisa build dengan BMKG Gempa API, fokus konteks Padang & Sumbar.
+
+## 1. Real-Time Alert System untuk Padang
+
+**Problem:** Warga Padang butuh tau gempa cepat (karena Padang seismic-active &
+tsunami-prone). Notifikasi resmi kadang lambat / gak personal.
+
+**Solusi:** Telegram bot / web push yang notify gempa M≥4 di Sumbar.
+
+```python
+import requests, time
+from datetime import datetime
+
+LAST_GEMPA = None
+
+def is_sumbar(wilayah):
+    keywords = ['SUMBAR', 'PADANG', 'BUKITTINGGI', 'PARIAMAN', 'MENTAWAI']
+    return any(k in wilayah.upper() for k in keywords)
+
+def alert_via_telegram(gempa):
+    msg = f"⚠️ Gempa M{gempa['Magnitude']} - {gempa['Wilayah']}"
+    msg += f"\n📍 {gempa['Coordinates']}"
+    msg += f"\n🕐 {gempa['Tanggal']} {gempa['Jam']}"
+    msg += f"\n🌊 {gempa['Potensi']}"
+    # send to telegram API...
+
+while True:
+    res = requests.get('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json')
+    gempa = res.json()['Infogempa']['gempa']
+
+    # Filter: Sumbar + M≥4 + belum di-alert
+    if (
+        is_sumbar(gempa['Wilayah'])
+        and float(gempa['Magnitude']) >= 4.0
+        and gempa['DateTime'] != LAST_GEMPA
+    ):
+        alert_via_telegram(gempa)
+        LAST_GEMPA = gempa['DateTime']
+
+    time.sleep(30)  # Poll setiap 30 detik
+```
+
+**Tech stack saran:** Python + Telegram Bot API + cron / systemd service.
+
+---
+
+## 2. Dashboard Historical Gempa Sumbar
+
+**Problem:** Riset / data journalism butuh visualisasi pola gempa Sumbar
+historis.
+
+**Solusi:** Dashboard pakai `gempaterkini.json` + cache lokal untuk akumulasi
+data.
+
+```ts
+// SvelteKit: src/routes/api/gempa-sumbar/+server.ts
+import { json } from '@sveltejs/kit';
+
+export async function GET() {
+	const res = await fetch('https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json');
+	const data = await res.json();
+
+	const sumbarGempa = data.Infogempa.gempa.filter((g: any) => {
+		const w = g.Wilayah.toUpperCase();
+		return ['SUMBAR', 'PADANG', 'MENTAWAI'].some((k) => w.includes(k));
+	});
+
+	return json({
+		count: sumbarGempa.length,
+		latest: sumbarGempa[0] ?? null,
+		all: sumbarGempa,
+	});
+}
+```
+
+**Visualisasi ide:**
+- Time-series chart (Chart.js): magnitude over time
+- Map heatmap (Leaflet): titik gempa + magnitude radius
+- Stats card: total gempa minggu ini, magnitude rata-rata, kedalaman rata-rata
+
+---
+
+## 3. PWA "Padang Real-Time Status"
+
+**Problem:** Warga butuh single dashboard untuk monitor kondisi Padang
+real-time.
+
+**Solusi:** PWA aggregate BMKG gempa + cuaca + PetaBencana banjir.
+
+```svelte
+<!-- src/lib/components/GempaCard.svelte -->
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { AlertTriangle } from 'lucide-svelte';
+
+	let gempa = $state<any>(null);
+
+	async function loadGempa() {
+		const res = await fetch('/api/gempa-sumbar');
+		const data = await res.json();
+		gempa = data.latest;
+	}
+
+	onMount(() => {
+		loadGempa();
+		const interval = setInterval(loadGempa, 30_000);
+		return () => clearInterval(interval);
+	});
+</script>
+
+{#if gempa}
+	<div class="rounded-xl border border-gray-200 p-6">
+		<div class="flex items-center gap-2 text-amber-600">
+			<AlertTriangle class="size-5" />
+			<h3 class="font-semibold">Gempa Terbaru Sumbar</h3>
+		</div>
+		<p class="mt-2 text-2xl font-bold">M {gempa.Magnitude}</p>
+		<p class="text-sm text-gray-600">{gempa.Wilayah}</p>
+		<p class="mt-1 text-xs text-gray-500">{gempa.Tanggal} · {gempa.Jam}</p>
+		<p class="mt-1 text-xs font-medium">{gempa.Potensi}</p>
+	</div>
+{/if}
+```
+
+---
+
+## 4. Tsunami Risk Indicator untuk Pesisir Padang
+
+**Problem:** Padang punya risk tsunami tinggi (megathrust zone). Gempa besar
+laut Sumbar bisa trigger tsunami.
+
+**Solusi:** Filter gempa M≥6 + lokasi laut + tampilin warning level.
+
+```js
+function tsunamiRiskLevel(gempa) {
+	const mag = parseFloat(gempa.Magnitude);
+	const depth = parseInt(gempa.Kedalaman);
+	const wilayah = gempa.Wilayah.toLowerCase();
+
+	// Heuristik dasar (BUKAN official):
+	// - Gempa M≥6.5 + laut + dangkal = HIGH RISK
+	// - BMKG official warning via 'Potensi' field
+	const isOffShore = wilayah.includes('laut') || wilayah.includes('barat ');
+
+	if (gempa.Potensi.includes('berpotensi tsunami')) return 'CRITICAL';
+	if (mag >= 6.5 && depth <= 30 && isOffShore) return 'HIGH';
+	if (mag >= 5.5 && isOffShore) return 'WATCH';
+	return 'NORMAL';
+}
+```
+
+<Aside type="danger" title="Disclaimer">
+	Tsunami warning RESMI cuma dari BMKG via InaTEWS. Indicator di atas adalah
+	**informasi pelengkap**, BUKAN pengganti official warning. Selalu prioritaskan
+	BMKG/BPBD announcement.
+</Aside>
+
+---
+
+## 5. Data Journalism — "Sumbar dalam Angka Gempa"
+
+**Problem:** Jurnalis butuh data konkret untuk feature story "Padang & Risk
+Gempa".
+
+**Solusi:** Aggregate data dari multiple sources untuk story angle.
+
+**Story idea:**
+- "Berapa gempa Sumbar setahun terakhir?" (akumulasi `gempaterkini.json` daily)
+- "Kapan gempa terbesar yang dirasakan warga Padang?" (filter
+  `gempadirasakan.json` historical)
+- "Mengapa Mentawai sering gempa?" (data + geological context)
+
+**Tools:**
+- Python (pandas) untuk analisis
+- Looker Studio / Chart.js untuk visualisasi
+- Datawrapper untuk publish embed
+
+---
+
+## Use Case Lain yang Worth Eksplor
+
+- **SMS Gateway** untuk warga gak punya smartphone (pakai BMKG + Twilio)
+- **Sirene Otomatis** integrated dengan IoT (BPBD partnership)
+- **Insurance Risk Model** (multi-decade gempa data → premi adjustment)
+- **Tourism Safety App** untuk wisatawan Sumbar/Mentawai (gempa + tsunami warn)
+- **Edukasi Sekolah** — interactive learning gempa pakai data nyata
+
+<LinkCard
+	title="Punya Use Case Lain?"
+	description="Open Issue di GitHub buat tambah ke catalog ini."
+	href="https://github.com/superemem/openpadang/issues/new"
+/>

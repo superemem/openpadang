@@ -1,0 +1,160 @@
+---
+title: BMKG Gempa Real-Time — Quick Start
+description: Akses data gempa real-time BMKG dalam 5 menit. No API key, gratis, JSON.
+---
+
+import { Aside, Steps, Tabs, TabItem, Badge, LinkCard } from '@astrojs/starlight/components';
+
+<Aside type="tip" title="5 menit setup">
+	No API key. No registrasi. Tinggal `fetch()` ke URL JSON. Cocok untuk yang
+	butuh **prototype cepat**.
+</Aside>
+
+## Apa yang Akan Lo Dapet
+
+3 endpoint JSON dari BMKG dengan data gempa Indonesia (termasuk Sumbar):
+
+- **Gempa terbaru** — gempa paling baru (latency ~6 detik)
+- **15 gempa terakhir** — riwayat singkat
+- **Gempa dirasakan warga** — gempa yang dirasakan masyarakat
+
+Semua **public domain** (data pemerintah), bisa lo pakai untuk **app, dashboard,
+riset, atau alert system**.
+
+## Step-by-Step
+
+<Steps>
+
+1. **Buka terminal atau browser**, paste URL ini:
+
+   ```
+   https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json
+   ```
+
+   Lo bakal dapet response JSON. Itu udah jadi data gempa terbaru.
+
+2. **Parse dalam app lo.** Format response:
+
+   ```json
+   {
+     "Infogempa": {
+       "gempa": {
+         "Tanggal": "12 Mei 2026",
+         "Jam": "10:15:32 WIB",
+         "DateTime": "2026-05-12T03:15:32+00:00",
+         "Coordinates": "-0.95,100.36",
+         "Lintang": "0.95 LS",
+         "Bujur": "100.36 BT",
+         "Magnitude": "3.4",
+         "Kedalaman": "10 km",
+         "Wilayah": "21 km BaratLaut KOTAPADANG-SUMBAR",
+         "Potensi": "Tidak berpotensi tsunami",
+         "Dirasakan": "II Padang",
+         "Shakemap": "20260512031532.mmi.jpg"
+       }
+     }
+   }
+   ```
+
+3. **Filter Sumbar/Padang.** Cek `Wilayah` mengandung kata `SUMBAR`, `PADANG`,
+   atau `BUKITTINGGI`, atau parse koordinat (Sumbar ada di **lat -3.5 s/d 0.5,
+   lng 98 s/d 102**).
+
+4. **Done!** Lo bisa display di app, send notification, atau analisa.
+
+</Steps>
+
+## Contoh Konkret
+
+<Tabs>
+<TabItem label="cURL">
+
+```bash
+curl -s https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json | jq .Infogempa.gempa
+```
+
+</TabItem>
+<TabItem label="JavaScript (Browser/Node)">
+
+```js
+const res = await fetch('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json');
+const data = await res.json();
+const gempa = data.Infogempa.gempa;
+
+console.log(`Gempa M${gempa.Magnitude} di ${gempa.Wilayah}`);
+console.log(`Waktu: ${gempa.Tanggal} ${gempa.Jam}`);
+```
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+import requests
+
+url = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json"
+data = requests.get(url).json()
+gempa = data["Infogempa"]["gempa"]
+
+print(f"Gempa M{gempa['Magnitude']} di {gempa['Wilayah']}")
+print(f"Waktu: {gempa['Tanggal']} {gempa['Jam']}")
+```
+
+</TabItem>
+<TabItem label="SvelteKit">
+
+```ts
+// src/routes/api/gempa/+server.ts
+import { json } from '@sveltejs/kit';
+
+export async function GET() {
+	const res = await fetch('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json');
+	const data = await res.json();
+	return json(data.Infogempa.gempa);
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Filter Padang/Sumbar
+
+Karena BMKG endpoint cover seluruh Indonesia, lo perlu filter di sisi client:
+
+```js
+function isPadangSumbar(gempa) {
+	const wilayah = gempa.Wilayah.toUpperCase();
+	if (wilayah.includes('SUMBAR') || wilayah.includes('PADANG')) return true;
+	if (wilayah.includes('BUKITTINGGI') || wilayah.includes('PARIAMAN')) return true;
+
+	// Atau cek koordinat (bbox Sumbar approx)
+	const [lat, lng] = gempa.Coordinates.split(',').map(Number);
+	return lat >= -3.5 && lat <= 0.5 && lng >= 98 && lng <= 102;
+}
+```
+
+## Selanjutnya
+
+<LinkCard
+	title="Lihat 3 endpoint lengkap"
+	description="Endpoint reference: autogempa, gempaterkini, gempadirasakan"
+	href="/guides/bmkg-gempa/endpoints/"
+/>
+
+<LinkCard
+	title="Use Cases Real Padang"
+	description="5 skenario nyata: alert system, historical analysis, dashboard, dll"
+	href="/guides/bmkg-gempa/use-cases/"
+/>
+
+<LinkCard
+	title="Gotchas & Limitations"
+	description="Timezone trap, false positives, rate limiting, field quirks"
+	href="/guides/bmkg-gempa/gotchas/"
+/>
+
+---
+
+<Aside type="note">
+	**Last verified:** Mei 2026. BMKG kadang ubah field naming. Kalau lo nemu
+	inconsistency, [report di Issue](https://github.com/superemem/openpadang/issues).
+</Aside>
